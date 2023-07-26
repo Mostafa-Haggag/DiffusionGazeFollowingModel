@@ -1,6 +1,4 @@
 import torch
-
-
 from .SpatialDepthLateFusion_2 import SpatialDepthLateFusion_2
 from .gaze_net_module import gaze_net_module
 
@@ -27,10 +25,10 @@ def get_model(config, device=torch.device("cuda")):
     modules = []
     # all the frezing stuff is set to false 
     if config.freeze_scene:
-        modules += [model.scene_backbone]
+        modules += [model.gaze_model.scene_backbone]
 
     if config.freeze_face:
-        modules += [model.face_backbone]
+        modules += [model.gaze_model.face_backbone]
     for module in modules:
         for layer in module.children():
             for param in layer.parameters():
@@ -50,9 +48,16 @@ def load_pretrained(model, pretrained_dict):
     if pretrained_dict is None:
         print("Pretraining is None")
         return model
-    # print(pretrained_dict)
-    print(type(pretrained_dict))
-
+    """
+    This part should be modified from one model to the other 
+    """
+    for index, element in enumerate(list(pretrained_dict.keys())):
+                if element.startswith("face_backbone") or element.startswith("scene_backbone") or element.startswith("attn") :
+                    new_element_name = "gaze_model."+ element
+                    pretrained_dict[new_element_name] = pretrained_dict.pop(element)
+    """
+    This part should be modified from one model to the other
+    """
     model_dict = model.state_dict()# the weights that are already loaded
     model_dict.update(pretrained_dict)
     print(model.load_state_dict(model_dict, strict=False))

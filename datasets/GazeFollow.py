@@ -19,7 +19,7 @@ from datasets.transforms.ToColorMap import ToColorMap
 from utils import get_head_mask, get_label_map
 
 class GazeFollow(Dataset):
-    def __init__(self, data_dir, labels_path,random_size=False, input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
+    def __init__(self, data_dir, labels_path,random_size=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
                  gaze_point_threshold=0):
         self.data_dir = data_dir
         self.input_size = input_size
@@ -35,8 +35,11 @@ class GazeFollow(Dataset):
             ]
         )
         self.random_size=random_size
-
-    
+        value= 0
+        if x_loss==False:
+            value = 1
+        else:
+            value = -1
         column_names = [
             "path",
             "idx",
@@ -128,7 +131,7 @@ class GazeFollow(Dataset):
             '''
             # only use "in" or "out "gaze (-1 is invalid, 0 is out gaze)
             # modifiyed by the instruction of fernando
-            df = df[df["inout"] != -1]  
+            df = df[df["inout"] != value]  
             df.reset_index(inplace=True)
             # path of all of the pictures
             self.X = df["path"] 

@@ -1,4 +1,4 @@
-![vgg16_xml.drawio](/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/assets/vgg16_xml.drawio.png)
+![vgg16_xml.drawio](assets/vgg16_xml.drawio.png)
 
 # Diffusion Gaze Following Model
 

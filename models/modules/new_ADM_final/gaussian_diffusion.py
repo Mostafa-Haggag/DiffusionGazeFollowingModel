@@ -153,13 +153,11 @@ class GaussianDiffusion:
         normalization_value=1,
         normalizaiton_std_flag=False,
         noise_changer=False,
-        cond_scale=1.0,
         mse_loss_weight_type='constant',
         enforce_snr=False,
 
     ):
         self.mse_loss_weight_type = mse_loss_weight_type
-        self.cond_scale=cond_scale
         self.model_mean_type = model_mean_type
         self.model_var_type = model_var_type
         self.loss_type = loss_type
@@ -310,7 +308,7 @@ class GaussianDiffusion:
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def p_mean_variance(
-        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None,Flag_CFG=False
+        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None
     ):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
@@ -343,7 +341,6 @@ class GaussianDiffusion:
         # we come here again
         # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
         # scale timestep is not super usefull at alll
-        model_kwargs['Flag_CFG']=Flag_CFG
         model_output,inout = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
         # we donot enter the forward function but we should return in here
         # this is where we have the error. 
@@ -603,7 +600,6 @@ class GaussianDiffusion:
             # print(model)
             # print(type(model))
             # we come here next step
-            model_kwargs['Flag_CFG']=False
             model_output,inout = model(x=x_t, ts=self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
@@ -726,10 +722,6 @@ class GaussianDiffusion:
                  - 'pred_xstart': a prediction of x_0.
         """
         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
-        if self.cond_scale!=1:
-            Flag_CFG = True
-        else:
-            Flag_CFG = False
         out = self.p_mean_variance(
             model,
             x,
@@ -737,7 +729,6 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
-            Flag_CFG = Flag_CFG
         )
         noise = th.randn_like(x)
         nonzero_mask = (
@@ -863,10 +854,6 @@ class GaussianDiffusion:
 
         Same usage as p_sample().
         """
-        if self.cond_scale!=1:
-            Flag_CFG = True
-        else:
-            Flag_CFG = False
         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
 
         out = self.p_mean_variance(
@@ -876,7 +863,6 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
-            Flag_CFG = Flag_CFG
         )
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)

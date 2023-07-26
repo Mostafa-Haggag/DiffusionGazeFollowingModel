@@ -18,7 +18,6 @@ def create_gaussian_diffusion(
     normalization_value=1,
     normalizaiton_std_flag=False,
     noise_changer=False,
-    cond_scale=1.0,
     mse_loss_weight_type='constant',
     predict_v=False,
     enforce_snr=False,
@@ -72,7 +71,6 @@ def create_gaussian_diffusion(
         normalization_value=normalization_value,
         normalizaiton_std_flag=normalizaiton_std_flag,
         noise_changer=noise_changer,
-        cond_scale=cond_scale,
         mse_loss_weight_type=mse_loss_weight_type,
         enforce_snr=enforce_snr,
     )

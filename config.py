@@ -87,11 +87,11 @@ def get_config():
     parser.add_argument("--unet_dropout", type=float, default=0.0, help="This is used to control the drop of the unet")
     parser.add_argument("--offset_noise_strength", type=float, default=0.1, help="This is used to control the drop of the unet")
     parser.add_argument("--noise_changer", default=False, action="store_true", help="This is the noise that we change the noise ")
-    parser.add_argument("--cond_scale", type=float, default=1., help="When we set it to 1, we are not using classfier free guidance at sampling but when we set it for \
-                        any value between 1 to 9 you are going more towards the classifier guidance stuffff  ")
-    parser.add_argument("--cond_drop_prob", type=float, default=0., help="By setting this value to 0 you are not using classifer free guidance at trainging and when you set it to more \
-                        than 0 you start working with classfieir free guidance")
-    parser.add_argument("--rescaled_phi", type=float, default=0., help="It is used to set some specfic parameters ")
+    # parser.add_argument("--cond_scale", type=float, default=1., help="When we set it to 1, we are not using classfier free guidance at sampling but when we set it for \
+    #                     any value between 1 to 9 you are going more towards the classifier guidance stuffff  ")
+    # parser.add_argument("--cond_drop_prob", type=float, default=0., help="By setting this value to 0 you are not using classifer free guidance at trainging and when you set it to more \
+    #                     than 0 you start working with classfieir free guidance")
+    # parser.add_argument("--rescaled_phi", type=float, default=0., help="It is used to set some specfic parameters ")
     parser.add_argument("--mse_loss_weight_type", default="constant")
     # the options can be (constant,min_snr_,max_snr_,trunc_snr,snr,inv_snr,)
     # ADM model paramters to be removed if not needed

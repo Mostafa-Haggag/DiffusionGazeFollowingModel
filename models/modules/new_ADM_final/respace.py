@@ -137,9 +137,9 @@ class _WrappedModel:
         new_ts = map_tensor[ts]
         if self.rescale_timesteps:# it is a flag that we donot turn it on it is passed in the begining
             new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
-        if kwargs['Flag_CFG']==True:
-            del kwargs['Flag_CFG']
-            return self.model.forward_with_cond_scale(x,new_ts, **kwargs)
-        else:    
-            del kwargs['Flag_CFG']
-            return self.model(x,new_ts, **kwargs)
+        # if kwargs['Flag_CFG']==True:
+        #     del kwargs['Flag_CFG']
+        #     return self.model.forward_with_cond_scale(x,new_ts, **kwargs)
+        # else:    
+        #     del kwargs['Flag_CFG']
+        return self.model(x,new_ts, **kwargs)

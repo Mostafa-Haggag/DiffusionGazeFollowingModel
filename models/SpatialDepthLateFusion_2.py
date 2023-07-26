@@ -27,10 +27,13 @@ class SpatialDepthLateFusion_2(nn.Module):
         use_fp16=False,
         attention_module=False,
         dropout=0.0,
+    ):
+        """ 
+        Unused
         cond_drop_prob=0.,
         cond_scale=1.0,
         rescaled_phi=0,
-    ):
+        """
         super(SpatialDepthLateFusion_2, self).__init__()
         self.avgpool = nn.AvgPool2d(7, stride=1)
         self.scene_backbone = ResNet(in_channels=4, layers=resnet_scene_layers, inplanes=resnet_scene_inplanes)
@@ -51,11 +54,11 @@ class SpatialDepthLateFusion_2(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.attn = nn.Linear(1808, 1 * 7 * 7)
         self.attention_module = attention_module
-        self.cond_drop_prob=cond_drop_prob
-        self.cond_scale=cond_scale
-        self.rescaled_phi=rescaled_phi
-        if self.cond_drop_prob>0:
-            self.null_classes_emb = nn.Parameter(torch.randn([98,unet_context_vector]))
+        # self.cond_drop_prob=cond_drop_prob
+        # self.cond_scale=cond_scale
+        # self.rescaled_phi=rescaled_phi
+        # if self.cond_drop_prob>0:
+        #     self.null_classes_emb = nn.Parameter(torch.randn([98,unet_context_vector]))
         self.sequential = nn.Sequential(    nn.Conv2d(2048, 512, kernel_size=1, stride=1, padding=0, bias=False),
                                             nn.BatchNorm2d(512),
                                             nn.ReLU(inplace=True),
@@ -114,44 +117,44 @@ class SpatialDepthLateFusion_2(nn.Module):
             encoding_inout = self.fc_inout(encoding_inout)
             ## end of important stuff 
             conditioning = torch.concat([attn_applied_scene_feat.view(-1, 49,self.unet_context_vector),face_feat.view(-1, 49,self.unet_context_vector)],1)
-        if self.cond_drop_prob>0:
-            batch =conditioning.shape[0]
-            device = conditioning.get_device()
-            # keep_mask = (torch.rand(batch)>self.cond_drop_prob).to(device) 
-            keep_mask = self.prob_mask_like((batch,), 1 - self.cond_drop_prob, device = device)# you have size of batch size 
-            null_classes_emb = repeat(self.null_classes_emb, 'd c -> b d c', b = batch)
-            conditioning = torch.where(
-                rearrange(keep_mask, 'b -> b 1 1'),
-                conditioning,
-                null_classes_emb
-            )
+        # if self.cond_drop_prob>0:
+        #     batch =conditioning.shape[0]
+        #     device = conditioning.get_device()
+        #     # keep_mask = (torch.rand(batch)>self.cond_drop_prob).to(device) 
+        #     keep_mask = self.prob_mask_like((batch,), 1 - self.cond_drop_prob, device = device)# you have size of batch size 
+        #     null_classes_emb = repeat(self.null_classes_emb, 'd c -> b d c', b = batch)
+        #     conditioning = torch.where(
+        #         rearrange(keep_mask, 'b -> b 1 1'),
+        #         conditioning,
+        #         null_classes_emb
+        #     )
         x = self.model(heat_map,time,conditioning)
         return x,encoding_inout
-    def forward_with_cond_scale(
-        self,
-        *args,
-        **kwargs
-        ):
-        orginal_value = self.cond_drop_prob
-        self.cond_drop_prob = 0
-        logits = self.forward(*args, **kwargs)
-        self.cond_drop_prob = 1
-        null_logits = self.forward(*args,**kwargs)
-        scaled_logits = null_logits + (logits - null_logits).mul(self.cond_scale)
-        if self.rescaled_phi == 0.:
-            self.cond_drop_prob = orginal_value
-            return scaled_logits
+    # def forward_with_cond_scale(
+    #     self,
+    #     *args,
+    #     **kwargs
+    #     ):
+    #     orginal_value = self.cond_drop_prob
+    #     self.cond_drop_prob = 0
+    #     logits = self.forward(*args, **kwargs)
+    #     self.cond_drop_prob = 1
+    #     null_logits = self.forward(*args,**kwargs)
+    #     scaled_logits = null_logits + (logits - null_logits).mul(self.cond_scale)
+    #     if self.rescaled_phi == 0.:
+    #         self.cond_drop_prob = orginal_value
+    #         return scaled_logits
 
-        std_fn = partial(torch.std, dim = tuple(range(1, scaled_logits.ndim)), keepdim = True)
-        rescaled_logits = scaled_logits * (std_fn(logits) / std_fn(scaled_logits))
-        self.cond_drop_prob = orginal_value
+    #     std_fn = partial(torch.std, dim = tuple(range(1, scaled_logits.ndim)), keepdim = True)
+    #     rescaled_logits = scaled_logits * (std_fn(logits) / std_fn(scaled_logits))
+    #     self.cond_drop_prob = orginal_value
 
-        return rescaled_logits.mul(self.rescaled_phi) + scaled_logits.mul(1. - self.rescaled_phi)
+    #     return rescaled_logits.mul(self.rescaled_phi) + scaled_logits.mul(1. - self.rescaled_phi)
         
-    def prob_mask_like(self,shape, prob, device):
-        if prob == 1:
-            return torch.ones(shape, device = device, dtype = torch.bool)
-        elif prob == 0:
-            return torch.zeros(shape, device = device, dtype = torch.bool)
-        else:
-            return torch.zeros(shape, device = device).float().uniform_(0, 1) < prob
+    # def prob_mask_like(self,shape, prob, device):
+    #     if prob == 1:
+    #         return torch.ones(shape, device = device, dtype = torch.bool)
+    #     elif prob == 0:
+    #         return torch.zeros(shape, device = device, dtype = torch.bool)
+    #     else:
+    #         return torch.zeros(shape, device = device).float().uniform_(0, 1) < prob

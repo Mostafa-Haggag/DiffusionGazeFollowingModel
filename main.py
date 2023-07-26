@@ -55,9 +55,7 @@ from utils import (
     get_multi_hot_map,
     get_ap
 )
-# python3 main.py --init_weights pretrained/init_weights.pt --amp O1 --watch_wandb --tag "first_adm_new_CF" --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag --cond_drop_prob 0.1 --cond_scale 2.0 --rescaled_phi 0.7
-# python3 main.py --eval_weights output/spatial_depth_late_fusion_gazefollow_gazefollow/adm_random_std_more_attention_x_start/ckpt_epoch_15.pth --amp O1 --watch_wandb --tag adm_random_std_more_attention_x_start --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag
-# python3 main.py --eval_weights output/spatial_depth_late_fusion_gazefollow_gazefollow/adm_point_2/ckpt_epoch_50.pth --amp O1 --watch_wandb --tag adm_point_2 --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag --cond_drop_prob 0.1 --cond_scale 2.0 --rescaled_phi 0.7 --no_wandb
+
 def master_params_to_state_dict(model,master_params):
     state_dict = model.state_dict()
     for i, (name, _value) in enumerate(model.named_parameters()):
@@ -112,7 +110,6 @@ def main(config):
                 normalization_value=config.diff_normalization,
                 normalizaiton_std_flag=config.norm_std_flag,
                 noise_changer=config.noise_changer,
-                cond_scale=config.cond_scale,
                 mse_loss_weight_type=config.mse_loss_weight_type,
                 predict_v=config.adm_predict_v,
                 enforce_snr=config.fix_snr,

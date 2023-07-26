@@ -24,11 +24,13 @@ def get_model(config, device=torch.device("cuda")):
             learn_sigma=config.adm_learn_sigma,
             attention_module=config.adm_attention_module,
             dropout=config.unet_dropout,
+            )
+    """
+    unused
             cond_drop_prob=config.cond_drop_prob,
             cond_scale=config.cond_scale,
             rescaled_phi=config.rescaled_phi
-            )
-
+    """
     modules = []
     # all the frezing stuff is set to false 
     if config.freeze_scene:

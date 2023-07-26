@@ -22,11 +22,15 @@ def to_torch(ndarray):
 
 
 def get_head_mask(x_min, y_min, x_max, y_max, width, height, resolution):
-    head_box = np.array([x_min / width, y_min / height, x_max / width, y_max / height]) * resolution
-    head_box = np.clip(head_box, 0, resolution - 1) 
-    head_channel = np.zeros((resolution, resolution), dtype=np.float32)
+    # width is 300 and height is 400 and reosolution is 224
+    # the x min and ymin and all the rest are values 
+    head_box = np.array([x_min / width, y_min / height, x_max / width, y_max / height]) * resolution # scaling it betweee 224in an array array([ 35,  -3, 118,  82])
+    head_box = head_box.astype(int)# make it a tyype int in case there is something 
+    head_box = np.clip(head_box, 0, resolution - 1) # make sure that there is no negative valeus and everything in range of 0 to resolution -1
+    head_channel = np.zeros((resolution, resolution), dtype=np.float32)# create a matrix 224,224
+    # head box has the values array([ 35,   0, 118,  82])
     head_channel[head_box[1] : head_box[3], head_box[0] : head_box[2]] = 1
-    head_channel = torch.from_numpy(head_channel)  
+    head_channel = torch.from_numpy(head_channel) # turn into tensor and return it 
 
     return head_channel
 

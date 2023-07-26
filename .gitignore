@@ -339,4 +339,4 @@ pretrained/
 gazefollow_extended
 video_dataset
 models/modules/ignored_modules
-pictures
+ckpt_epoch_30.pth

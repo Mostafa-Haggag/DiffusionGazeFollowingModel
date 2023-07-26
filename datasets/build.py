@@ -3,7 +3,6 @@ import os
 from torch.utils.data import DataLoader
 
 from .GazeFollow import GazeFollow
-from .GOO import GOO
 from .VideoAttentionTarget import VideoAttentionTargetImages
 
 
@@ -21,12 +20,6 @@ def get_loader(name: str, root_dir: str, random_flag=False,input_size=224, outpu
         dataset = VideoAttentionTargetImages(
             root_dir, labels, random_size=random_flag,input_size=input_size, output_size=output_size, is_test_set=not is_train
         )
-        loader = DataLoader(
-            dataset=dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers, pin_memory=True
-        )
-    elif name == "goo":
-        labels = os.path.join(root_dir, "..", "oneshotrealhumansNew.pickle" if is_train else "testrealhumansNew.pickle")
-        dataset = GOO(root_dir, labels, input_size=input_size, output_size=output_size, is_test_set=not is_train)
         loader = DataLoader(
             dataset=dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers, pin_memory=True
         )

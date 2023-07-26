@@ -128,7 +128,7 @@ def main(config):
         # ema_params = [pretrained_dict_org.get("ema_params")[name] for name, _ in model.named_parameters()]
         for index, element in enumerate(list(pretrained_dict_org.get("ema_params").keys())):
             if element.startswith("model."):
-                print(element)
+                # print(element)
                 break
         new_dict = {**{key: pretrained_dict[key] for key in list(pretrained_dict.keys())[:index]},
             **{key: pretrained_dict_org.get("ema_params")[key] for key in list(pretrained_dict_org.get("ema_params").keys())[index:]}}

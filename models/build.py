@@ -2,16 +2,17 @@ import torch
 
 
 from .SpatialDepthLateFusion_2 import SpatialDepthLateFusion_2
-
+from .gaze_net_module import gaze_net_module
 
 def get_model(config, device=torch.device("cuda")):
-    # this has everything in here where we intialize the backbone 
-
+    gaze_model = gaze_net_module(       resnet_scene_layers=config.list_resnet_scene_layers,
+                                        resnet_face_layers=config.list_resnet_face_layers,
+                                        resnet_scene_inplanes=config.resnet_scene_inplanes,
+                                        resnet_face_inplanes=config.resnet_face_inplanes,
+                                        attention_module=config.adm_attention_module,
+                )
     model = SpatialDepthLateFusion_2(
-            resnet_scene_layers=config.list_resnet_scene_layers,
-            resnet_face_layers=config.list_resnet_face_layers,
-            resnet_scene_inplanes=config.resnet_scene_inplanes,
-            resnet_face_inplanes=config.resnet_face_inplanes,
+            gaze_model=gaze_model,
             unet_inout_channels=config.unet_inout_channels,
             unet_inplanes=config.unet_inplanes,
             unet_residual=config.unet_residual,
@@ -21,15 +22,8 @@ def get_model(config, device=torch.device("cuda")):
             unet_spatial_tf_layers=config.unet_spatial_tf_layers,
             unet_context_vector=config.unet_context_vector,
             learn_sigma=config.adm_learn_sigma,
-            attention_module=config.adm_attention_module,
             dropout=config.unet_dropout,
             )
-    """
-    unused
-            cond_drop_prob=config.cond_drop_prob,
-            cond_scale=config.cond_scale,
-            rescaled_phi=config.rescaled_phi
-    """
     modules = []
     # all the frezing stuff is set to false 
     if config.freeze_scene:
@@ -56,6 +50,9 @@ def load_pretrained(model, pretrained_dict):
     if pretrained_dict is None:
         print("Pretraining is None")
         return model
+    # print(pretrained_dict)
+    print(type(pretrained_dict))
+
     model_dict = model.state_dict()# the weights that are already loaded
     model_dict.update(pretrained_dict)
     print(model.load_state_dict(model_dict, strict=False))

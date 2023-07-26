@@ -20,7 +20,6 @@ def get_model(config, device=torch.device("cuda")):
             unet_spatial_tf_heads=config.unet_spatial_tf_heads,
             unet_spatial_tf_layers=config.unet_spatial_tf_layers,
             unet_context_vector=config.unet_context_vector,
-            use_fp16=config.use_fp16,
             learn_sigma=config.adm_learn_sigma,
             attention_module=config.adm_attention_module,
             dropout=config.unet_dropout,

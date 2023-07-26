@@ -24,7 +24,6 @@ class SpatialDepthLateFusion_2(nn.Module):
         unet_spatial_tf_layers=1,
         unet_context_vector=1024,
         learn_sigma=False,
-        use_fp16=False,
         attention_module=False,
         dropout=0.0,
     ):
@@ -47,7 +46,6 @@ class SpatialDepthLateFusion_2(nn.Module):
                          num_heads=unet_spatial_tf_heads,
                          tf_layers=unet_spatial_tf_layers,
                          context_dim=unet_context_vector,
-                         use_fp16=use_fp16,
                          dropout=dropout)   
         self.channels=unet_inout_channels
         self.unet_context_vector=unet_context_vector

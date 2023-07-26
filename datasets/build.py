@@ -41,20 +41,10 @@ def get_dataset(config):
         num_workers=config.num_workers,
         is_train=True,
     )
-# def get_loader(name: str, root_dir: str, random_flag=False,input_size=224, output_size=64, batch_size=48, num_workers=6, is_train=True,is_subsample_test_set=True,gaze_point_threshold=0):
 
-    # target_loader = get_loader(
-    #     config.target_dataset,
-    #     config.target_dataset_dir,
-    #     input_size=config.input_size,
-    #     output_size=config.output_size,
-    #     batch_size=config.batch_size,
-    #     num_workers=config.num_workers,
-    #     is_train=True,
-    # )
     target_test_loader = get_loader(
-        name=config.target_dataset,
-        root_dir=config.target_dataset_dir,
+        name=config.source_dataset,
+        root_dir=config.source_dataset_dir,
         random_flag=config.random_flag,
         input_size=config.input_size,
         output_size=config.output_size,

@@ -86,17 +86,6 @@ def main(config):
     # this the spatiiala transform number 2 contianing everything that I need in here right now.  
 
     print("The diffusion ")
-    """
-    create gaussian diffusion
-    steps we set it to 1000
-    learn sigma
-    noise schedule
-    use k;
-    predict xstart
-    resecake tunesteos
-    rescale learned sigma
-    #TODO: ask nicola about the timestep respacing later mayber because you donot fully understand it !!!
-    """
     diffusion = create_gaussian_diffusion(
                 steps=config.train_time_steps,
                 sample_steps=config.sample_time_steps,
@@ -323,7 +312,7 @@ def main(config):
                 wandb.init(
                     id=run_id,
                     config=config,
-                    tags=["spatial_depth_late_fusion", config.source_dataset, config.target_dataset],
+                    tags=["spatial_depth_late_fusion", config.source_dataset],
                     save_code=True
                 )
                 wandb.run.name = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_{config.model_id}_{config.tag}'
@@ -524,7 +513,7 @@ def train_one_epoch(
             # output_loss = mse_loss(losses["location"],gaze_points.squeeze(1))
             output_loss = mse_loss(losses["location"], torch.flip(gaze_points.squeeze(1), [1]))
         # this is where we are controlling the weights  of the losses. 
-        if config.target_dataset=="videoattentiontarget":
+        if config.source_dataset=="videoattentiontarget":
                 s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
                 s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
         else:

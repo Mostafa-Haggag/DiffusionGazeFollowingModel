@@ -383,7 +383,7 @@ class GaussianDiffusion:
             if denoised_fn is not None:
                 x = denoised_fn(x)
             if clip_denoised:
-                return x.clamp(-1, 1)
+                return x.clamp(-1*self.normalization_value, 1*self.normalization_value)
             return x
 
         if self.model_mean_type == ModelMeanType.PREVIOUS_X:# this is V case!!!
@@ -896,44 +896,7 @@ class GaussianDiffusion:
         sample = mean_pred + sigma * noise
 
         return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
-    # not used for now 
-    def ddim_reverse_sample(
-        self,
-        model,
-        x,
-        t,
-        clip_denoised=True,
-        denoised_fn=None,
-        model_kwargs=None,
-        eta=0.0,
-    ):
-        """
-        Sample x_{t+1} from the model using DDIM reverse ODE.
-        """
-        assert eta == 0.0, "Reverse ODE only for deterministic path"
-        out = self.p_mean_variance(
-            model,
-            x,
-            t,
-            clip_denoised=clip_denoised,
-            denoised_fn=denoised_fn,
-            model_kwargs=model_kwargs,
-        )
-        # Usually our model outputs epsilon, but we re-derive it
-        # in case we used x_start or x_prev prediction.
-        eps = (
-            _extract_into_tensor(self.sqrt_recip_alphas_cumprod, t, x.shape) * x
-            - out["pred_xstart"]
-        ) / _extract_into_tensor(self.sqrt_recipm1_alphas_cumprod, t, x.shape)
-        alpha_bar_next = _extract_into_tensor(self.alphas_cumprod_next, t, x.shape)
-
-        # Equation 12. reversed
-        mean_pred = (
-            out["pred_xstart"] * th.sqrt(alpha_bar_next)
-            + th.sqrt(1 - alpha_bar_next) * eps
-        )
-
-        return {"sample": mean_pred, "pred_xstart": out["pred_xstart"]}
+   
 
     def ddim_sample_loop(
         self,
@@ -996,7 +959,7 @@ class GaussianDiffusion:
         else:
             img = th.randn(*shape, device=device)
         # I am sampling in here not till 1000 but till specific number of sample steps 
-        
+        img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
         # indices = list(range(self.sample_steps))[::-1]
         #modifcation to be done to make ddim work and start from last sample 
         indices =   list(reversed(th.linspace(-1, self.num_timesteps - 1, steps = self.sample_steps+1).int().tolist()))
@@ -1021,100 +984,5 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-####################### NOT Used anywheere 
-    def condition_mean(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
-        """
-        Compute the mean for the previous step, given a function cond_fn that
-        computes the gradient of a conditional log probability with respect to
-        x. In particular, cond_fn computes grad(log(p(y|x))), and we want to
-        condition on y.
 
-        This uses the conditioning strategy from Sohl-Dickstein et al. (2015).
-        """
-        gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
-        new_mean = (
-            p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
-        )
-        return new_mean
-
-    def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
-        """
-        Compute what the p_mean_variance output would have been, should the
-        model's score function be conditioned by cond_fn.
-
-        See condition_mean() for details on cond_fn.
-
-        Unlike condition_mean(), this instead uses the conditioning strategy
-        from Song et al (2020).
-        """
-        alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
-
-        eps = self._predict_eps_from_xstart(x, t, p_mean_var["pred_xstart"])
-        eps = eps - (1 - alpha_bar).sqrt() * cond_fn(
-            x, self._scale_timesteps(t), **model_kwargs
-        )
-
-        out = p_mean_var.copy()
-        out["pred_xstart"] = self._predict_xstart_from_eps(x, t, eps)
-        out["mean"], _, _ = self.q_posterior_mean_variance(
-            x_start=out["pred_xstart"], x_t=x, t=t
-        )
-        return out
     
-    
-    def calc_bpd_loop(self, model, x_start, clip_denoised=True, model_kwargs=None):
-        """
-        Compute the entire variational lower-bound, measured in bits-per-dim,
-        as well as other related quantities.
-
-        :param model: the model to evaluate loss on.
-        :param x_start: the [N x C x ...] tensor of inputs.
-        :param clip_denoised: if True, clip denoised samples.
-        :param model_kwargs: if not None, a dict of extra keyword arguments to
-            pass to the model. This can be used for conditioning.
-
-        :return: a dict containing the following keys:
-                 - total_bpd: the total variational lower-bound, per batch element.
-                 - prior_bpd: the prior term in the lower-bound.
-                 - vb: an [N x T] tensor of terms in the lower-bound.
-                 - xstart_mse: an [N x T] tensor of x_0 MSEs for each timestep.
-                 - mse: an [N x T] tensor of epsilon MSEs for each timestep.
-        """
-        device = x_start.device
-        batch_size = x_start.shape[0]
-
-        vb = []
-        xstart_mse = []
-        mse = []
-        for t in list(range(self.num_timesteps))[::-1]:
-            t_batch = th.tensor([t] * batch_size, device=device)
-            noise = th.randn_like(x_start)
-            x_t = self.q_sample(x_start=x_start, t=t_batch, noise=noise)
-            # Calculate VLB term at the current timestep
-            with th.no_grad():
-                out = self._vb_terms_bpd(
-                    model,
-                    x_start=x_start,
-                    x_t=x_t,
-                    t=t_batch,
-                    clip_denoised=clip_denoised,
-                    model_kwargs=model_kwargs,
-                )
-            vb.append(out["output"])
-            xstart_mse.append(mean_flat((out["pred_xstart"] - x_start) ** 2))
-            eps = self._predict_eps_from_xstart(x_t, t_batch, out["pred_xstart"])
-            mse.append(mean_flat((eps - noise) ** 2))
-
-        vb = th.stack(vb, dim=1)
-        xstart_mse = th.stack(xstart_mse, dim=1)
-        mse = th.stack(mse, dim=1)
-
-        prior_bpd = self._prior_bpd(x_start)
-        total_bpd = vb.sum(dim=1) + prior_bpd
-        return {
-            "total_bpd": total_bpd,
-            "prior_bpd": prior_bpd,
-            "vb": vb,
-            "xstart_mse": xstart_mse,
-            "mse": mse,
-        }

@@ -35,11 +35,6 @@ class GazeFollow(Dataset):
             ]
         )
         self.random_size=random_size
-        value= 0
-        if x_loss==False:
-            value = 1
-        else:
-            value = -1
         column_names = [
             "path",
             "idx",
@@ -131,7 +126,10 @@ class GazeFollow(Dataset):
             '''
             # only use "in" or "out "gaze (-1 is invalid, 0 is out gaze)
             # modifiyed by the instruction of fernando
-            df = df[df["inout"] != value]  
+            if x_loss==False:
+                df = df[df["inout"] == 1]  
+            else:
+                df = df[df["inout"] != -1]  
             df.reset_index(inplace=True)
             # path of all of the pictures
             self.X = df["path"] 

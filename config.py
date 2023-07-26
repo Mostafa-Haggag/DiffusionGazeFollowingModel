@@ -97,7 +97,7 @@ def get_config():
 
     # Training args
     parser.add_argument("--lr", type=float, default=2.5e-4, help="learning rate")# changed from 2.5e-4 to 8e-5
-    parser.add_argument("--epochs", type=int, default=20, help="number of epochs")
+    parser.add_argument("--epochs", type=int, default=30, help="number of epochs")
     parser.add_argument("--evaluate_every", type=int, default=5, help="evaluate every N epochs")
     parser.add_argument("--save_every", type=int, default=1, help="save model every N epochs")
     parser.add_argument("--print_every", type=int, default=10, help="print training stats every N batches")
@@ -148,6 +148,7 @@ def get_config():
     ## Python vars() Function
     ## The vars() function returns the __dict__ attribute of an object
     ##
-    print()
-
+    print("meoowww")
+    print(args.tag)
+    print(args.device)
     return args

@@ -8,6 +8,8 @@ def get_model(config, device=torch.device("cuda")):
                                         resnet_scene_inplanes=config.resnet_scene_inplanes,
                                         resnet_face_inplanes=config.resnet_face_inplanes,
                                         attention_module=config.adm_attention_module,
+                                        unet_context_vector=config.unet_context_vector,
+
                 )
     model = SpatialDepthLateFusion_2(
             gaze_model=gaze_model,

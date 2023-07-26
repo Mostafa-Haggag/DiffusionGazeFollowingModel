@@ -241,7 +241,7 @@ def main(config):
                 optimizer.zero_grad()
                 #
                 if config.lr_schedular:
-                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=3, max_epochs=30)
+                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
                     scheduler.load_state_dict(checkpoint["scheduler"])
                 optimizer.load_state_dict(checkpoint["optimizer"])# loading the state of the optimizer
                 next_epoch = checkpoint["epoch"] + 1
@@ -270,7 +270,7 @@ def main(config):
                                     )
             ema_params = copy.deepcopy(list(model.parameters()))
             if config.lr_schedular:
-                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=3, max_epochs=30)
+                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
             # # Get optimizer
             optimizer.zero_grad()
             del pretrained_dict
@@ -288,7 +288,7 @@ def main(config):
             ema_params = copy.deepcopy(list(model.parameters()))
             optimizer.zero_grad()
             if config.lr_schedular:
-                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=3, max_epochs=30)
+                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
         # turning it on fucks everything
         # print(len(optimizer.param_groups))
 

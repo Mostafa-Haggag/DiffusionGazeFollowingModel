@@ -32,29 +32,29 @@ def get_loader(name: str, root_dir: str, random_flag=False,x_loss=False,input_si
 def get_dataset(config):
     # source dataset "datasets/gazefollow_extended"
     source_loader = get_loader(
-        name=config.source_dataset,
-        root_dir=config.source_dataset_dir,
-        random_flag=config.random_flag,
-        input_size=config.input_size,
-        output_size=config.output_size,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
+        name=config.Dataset.source_dataset,
+        root_dir=config.Dataset.source_dataset_dir,
+        random_flag=config.experiment_parameter.random_flag,
+        input_size=config.Dataset.input_size,
+        output_size=config.Dataset.output_size,
+        batch_size=config.Dataset.batch_size,
+        num_workers=config.Dataset.num_workers,
         is_train=True,
-        x_loss=config.x_loss,
+        x_loss=config.losses_parameters.x_loss,
     )
 
     target_test_loader = get_loader(
-        name=config.source_dataset,
-        root_dir=config.source_dataset_dir,
-        random_flag=config.random_flag,
-        input_size=config.input_size,
-        output_size=config.output_size,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
+        name=config.Dataset.source_dataset,
+        root_dir=config.Dataset.source_dataset_dir,
+        random_flag=config.experiment_parameter.random_flag,
+        input_size=config.Dataset.input_size,
+        output_size=config.Dataset.output_size,
+        batch_size=config.Dataset.batch_size,
+        num_workers=config.Dataset.num_workers,
         is_train=False,
-        is_subsample_test_set=config.is_subsample_test_set,
-        gaze_point_threshold=config.gaze_point_threshold,
-        x_loss=config.x_loss,
+        is_subsample_test_set=config.experiment_parameter.is_subsample_test_set,
+        gaze_point_threshold=config.Dataset.gaze_point_threshold,
+        x_loss=config.losses_parameters.x_loss,
     )
 
     return source_loader, target_test_loader

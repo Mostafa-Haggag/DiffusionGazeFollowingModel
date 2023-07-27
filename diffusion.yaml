@@ -1,0 +1,71 @@
+Dataset:
+  source_dataset: "gazefollow"
+  source_dataset_dir: "datasets/gazefollow_extended"
+  num_workers: 12
+  gaze_point_threshold : 0
+  init_weights : "pretrained/init_weights.pt"
+  # eval_weights : "ckpt_epoch_30.pth"
+  eval_weights : ""
+  lr: 2.5e-4
+  epochs: 30
+  evaluate_every: 5
+  save_every: 1
+  print_every: 10
+  no_resume: false
+  output_dir: "output"
+  amp: O1
+  no_wandb: false
+  no_save: false
+  batch_size: 16
+  input_size: 224
+  output_size: 64
+  weight_decay: 0
+  ema_rate: 0.9999
+  device: "cuda"
+  channels_last: false
+Diffusion:
+  unet_inout_channels: 1
+  unet_inplanes: 8
+  unet_residual: 1
+  list_unet_inplanes_multipliers: 
+      - 1
+      - 2
+      - 3
+      - 4
+  list_unet_attention_levels: 
+      - 2
+      - 4
+  unet_spatial_tf_heads: 4
+  unet_spatial_tf_layers: 1 
+  unet_context_vector: 1024
+  watch_wandb: true
+  train_time_steps: 1000
+  sample_time_steps: 250
+  unet_dropout: 0.0
+  adm: false
+  adm_predict_xstart: true
+  adm_predict_v: false
+  adm_use_kl: false  
+  adm_rescale_timesteps: false
+  adm_rescale_learned_sigmas: false
+  adm_learn_sigma: false
+  adm_attention_module: false
+experiment_parameter:
+  diff_normalization: 0.1
+  norm_std_flag: true
+  random_flag: true
+  is_subsample_test_set: false
+  Debugging_maps: false
+  eval_from_picture: false
+  clip_denoised: false
+  lr_schedular: true
+  fix_snr : false
+  offset_noise_strength: 0.1
+  noise_changer: false
+  ema_on: false
+  lr_anneal_steps: 0
+losses_parameters:
+  kl_div_loss: false
+  x_loss: true
+  other_loss: false
+  mse_loss_weight_type: "constant"

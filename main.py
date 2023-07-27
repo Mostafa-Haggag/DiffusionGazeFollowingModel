@@ -30,6 +30,8 @@ from einops import rearrange
 import math 
 import wandb
 import io
+from omegaconf import OmegaConf
+
 try:
     # noinspection PyUnresolvedReferences
     from apex import amp
@@ -65,60 +67,52 @@ def master_params_to_state_dict(model,master_params):
 
 
 
-def main(config):
+def main(config,config_1,config_2):
     # Create output dir if training
-    if not config.eval_weights:
-        os.makedirs(config.output_dir, exist_ok=True)
-    if not config.Debugging_maps:
+    if not config_1.Dataset.eval_weights:
+        os.makedirs(config_1.Dataset.output_dir, exist_ok=True)
+    if not config_1.experiment_parameter.Debugging_maps:
         matplotlib.use('Agg')
-
-    # interesting i already created it.
-    # Load train and validation datasets
-        
     print("Loading dataset")
-    source_loader, target_test_loader = get_dataset(config) # you get the two data sets 
-    device = torch.device(config.device) # the device that you will be working with . 
+    source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
+    device = torch.device(config_1.Dataset.device) # the device that you will be working with . 
     print(f"Running on {device}")
 
     # Load model
     print("Loading model")
     # YOU  got the model 
-    model = get_model(config, device=device).to(device,memory_format=get_memory_format(config))
+    model = get_model(config_1,config_2, device=device).to(device,memory_format=get_memory_format(config_1))
     # this the spatiiala transform number 2 contianing everything that I need in here right now.  
 
     print("The diffusion ")
     diffusion = create_gaussian_diffusion(
-                steps=config.train_time_steps,
-                sample_steps=config.sample_time_steps,
-                learn_sigma=config.adm_learn_sigma,
+                steps=config_1.Diffusion.train_time_steps,
+                sample_steps=config_1.Diffusion.sample_time_steps,
+                learn_sigma=config_1.Diffusion.adm_learn_sigma,
                 noise_schedule='linear',
-                use_kl=config.adm_use_kl,
-                predict_xstart=config.adm_predict_xstart,
-                rescale_timesteps=config.adm_rescale_timesteps,
-                rescale_learned_sigmas=config.adm_rescale_learned_sigmas,
+                use_kl=config_1.Diffusion.adm_use_kl,
+                predict_xstart=config_1.Diffusion.adm_predict_xstart,
+                rescale_timesteps=config_1.Diffusion.adm_rescale_timesteps,
+                rescale_learned_sigmas=config_1.Diffusion.adm_rescale_learned_sigmas,
                 timestep_respacing="",
-                normalization_value=config.diff_normalization,
-                normalizaiton_std_flag=config.norm_std_flag,
-                noise_changer=config.noise_changer,
-                mse_loss_weight_type=config.mse_loss_weight_type,
-                predict_v=config.adm_predict_v,
-                enforce_snr=config.fix_snr,
+                normalization_value=config_1.experiment_parameter.diff_normalization,
+                normalizaiton_std_flag=config_1.experiment_parameter.norm_std_flag,
+                noise_changer=config_1.experiment_parameter.noise_changer,
+                mse_loss_weight_type=config_1.losses_parameters.mse_loss_weight_type,
+                predict_v=config_1.Diffusion.adm_predict_v,
+                enforce_snr=config_1.experiment_parameter.fix_snr,
                 )
     schedule_sampler = create_named_schedule_sampler('uniform', diffusion)# the weights of everything
-    is_ddim_sampling = config.sample_time_steps < config.train_time_steps
+    is_ddim_sampling = config_1.Diffusion.sample_time_steps < config_1.Diffusion.train_time_steps
     sample_fn = (
                     diffusion.p_sample_loop if not is_ddim_sampling else diffusion.ddim_sample_loop
                     )
-    ema_rate = config.ema_rate
-    # I want to do a run here to check if it is working properly in here
-    # python3 main.py --eval_weights output/spatial_depth_late_fusion_gazefollow_gazefollow/default/ckpt_epoch_1.pth --amp O1 --diff_normalization 1 --no_wandb
-    # Do an evaluation or continue and prepare training
-    if config.eval_weights:
+    ema_rate = config_1.Dataset.ema_rate
+    if config_1.Dataset.eval_weights:
         # evaluation work 
         # Need to be editted
         print("Preparing evaluation")
-        #python3 main.py --eval_weights output/spatial_depth_late_fusion_gazefollow_gazefollow/first_adm_module/ckpt_epoch_5.pth --amp O1 --watch_wandb --tag "first_adm_module" --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag
-        pretrained_dict_org = torch.load(config.eval_weights, map_location=device)
+        pretrained_dict_org = torch.load(config_1.Dataset.eval_weights, map_location=device)
         pretrained_dict = pretrained_dict_org.get("model_state_dict") or pretrained_dict_org.get("model")
         # you have dictionary with everything in the model
         run_id = pretrained_dict_org.get("run_id")
@@ -134,7 +128,7 @@ def main(config):
         new_dict = {**{key: pretrained_dict[key] for key in list(pretrained_dict.keys())[:index]},
             **{key: pretrained_dict_org.get("ema_params")[key] for key in list(pretrained_dict_org.get("ema_params").keys())[index:]}}
         # ema_params = [new_dict[name] for name, _ in model.named_parameters()] # not needed
-        if config.ema_on:
+        if config_1.experiment_parameter.ema_on:
             model = load_pretrained(model,new_dict)
             # model = load_pretrained(model,pretrained_dict_org.get("ema_params"))
 
@@ -142,28 +136,22 @@ def main(config):
             model = load_pretrained(model, pretrained_dict)
         # Get optimizer
         optimizer = get_optimizer(model
-                                  , lr=config.lr
-                                  , weight_decay=config.weight_decay
+                                  , lr=config_1.Dataset.lr
+                                  , weight_decay=config_1.Dataset.weight_decay
                                   )
-        # optimizer = get_optimizer(model.parameters()
-        #                                 , lr=config.lr
-        #                                 , weight_decay=config.weight_decay
-        #                             )
         # incase there is an ema checkpoint for the loaded weights
         optimizer.zero_grad()
-        if config.amp:
-                model, optimizer = amp.initialize(model, optimizer, opt_level=config.amp)
+        if config_1.Dataset.amp:
+                model, optimizer = amp.initialize(model, optimizer, opt_level=config_1.Dataset.amp)
         ## TODO: check the evaluate funciton in here !!!!!!!
         auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \
-                                        evaluate(config, 
+                                        evaluate(config_1, 
                                                 model,
                                                 epoch,
                                                 device,
                                                 target_test_loader,
                                                 sample_fn
                                                 )
-        # auc, min_dist, avg_dist, min_ang_err, avg_ang_err,wandb_gaze_heatmap_images= \
-        #     evaluate(config, model,5, device, target_test_loader)# PROBLEM
         if run_id is not None and config.wandb:
             print(f"Resuming wandb run with id {run_id}")
             wandb.init(id=run_id,
@@ -204,9 +192,8 @@ def main(config):
         run_id = None
 
         # Check and resume previous run if existing
-        # print(config.resume)
         if config.resume:# you are resuming from specific place 
-            checkpoints = os.listdir(config.output_dir)
+            checkpoints = os.listdir(config_1.Dataset.output_dir)
             checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith("pth")]
             if len(checkpoints) > 0:
                 latest_checkpoint = max(
@@ -220,19 +207,12 @@ def main(config):
                 # The torch.load() function in PyTorch is used to load saved objects from a file, including models and tensors.
                 # It is a general-purpose function that can be used to load various types of objects that were previously 
                 # saved using torch.save() or similar methods.
-                # if config.ema_on:
-                #     model = load_pretrained(model, checkpoint["ema_params"])
-                #     # you load the weights of the model, then you update it
-                # else:
                 model = load_pretrained(model, checkpoint["model"])
                 # # Get optimizer
-                # optimizer = get_optimizer(model.parameters()
-                #                         , lr=config.lr
-                #                         , weight_decay=config.weight_decay
-                # )
+
                 optimizer = get_optimizer(model
-                                        , lr=config.lr
-                                        , weight_decay=config.weight_decay
+                                        , lr=config_1.Dataset.lr
+                                        , weight_decay=config.Dataset.weight_decay
                                     )
 
                 ema_params = [checkpoint.get("ema_params")[name] for name, _ in model.named_parameters()]
@@ -240,8 +220,8 @@ def main(config):
                 
                 optimizer.zero_grad()
                 #
-                if config.lr_schedular:
-                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
+                if config_1.experiment_parameter.lr_schedular:
+                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
                     scheduler.load_state_dict(checkpoint["scheduler"])
                 optimizer.load_state_dict(checkpoint["optimizer"])# loading the state of the optimizer
                 next_epoch = checkpoint["epoch"] + 1
@@ -252,11 +232,11 @@ def main(config):
         # The next_epoch check makes sure that we start with init_weights even when resume is set to True but no
         # checkpoints are not found and i am starting from 0 and I must set the intial weightss
         # the one the 3amadak allak 3alehom 
-        if config.init_weights and next_epoch == 0:
+        if config_1.Dataset.init_weights and next_epoch == 0:
             # you are putting some weights in the begining only
             print("Loading init weights")
 
-            pretrained_dict = torch.load(config.init_weights, map_location=device)
+            pretrained_dict = torch.load(config_1.Dataset.init_weights, map_location=device)
             pretrained_dict = pretrained_dict.get("model_state_dict") or pretrained_dict.get("model")
 
             model = load_pretrained(model, pretrained_dict)
@@ -265,12 +245,12 @@ def main(config):
             #                             , weight_decay=config.weight_decay
             #                         )
             optimizer = get_optimizer(model
-                                        , lr=config.lr
-                                        , weight_decay=config.weight_decay
+                                        , lr=config_1.Dataset.lr
+                                        , weight_decay=config_1.Dataset.weight_decay
                                     )
             ema_params = copy.deepcopy(list(model.parameters()))
-            if config.lr_schedular:
-                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
+            if config_1.experiment_parameter.lr_schedular:
+                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
             # # Get optimizer
             optimizer.zero_grad()
             del pretrained_dict
@@ -287,8 +267,8 @@ def main(config):
 
             ema_params = copy.deepcopy(list(model.parameters()))
             optimizer.zero_grad()
-            if config.lr_schedular:
-                scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config.epochs*0.1), max_epochs=config.epochs)
+            if config_1.experiment_parameter.lr_schedular:
+                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
         # turning it on fucks everything
         # print(len(optimizer.param_groups))
 
@@ -303,7 +283,7 @@ def main(config):
                 wandb.init(id=run_id,
                            resume="must",
                            save_code=True)
-                if config.watch_wandb:
+                if config_1.Diffusion.watch_wandb:
                     wandb.watch(model,log="gradients", log_freq=2000)
 
         elif config.wandb:
@@ -313,12 +293,12 @@ def main(config):
                 wandb.init(
                     id=run_id,
                     config=config,
-                    tags=["spatial_depth_late_fusion", config.source_dataset],
+                    tags=["spatial_depth_late_fusion", config_1.Dataset.source_dataset],
                     save_code=True
                 )
                 wandb.run.name = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}_{config.model_id}_{config.tag}'
                 
-                if config.watch_wandb:
+                if config_1.Diffusion.watch_wandb:
                     wandb.watch(model,log="gradients", log_freq=2000)
 
         else:
@@ -327,20 +307,20 @@ def main(config):
                 run_id = "0118999881999111725 3"
         # Init AMP if enabled and available
         # we can ignore this part as it is not needed 
-        if config.amp:
-            model, optimizer = amp.initialize(model, optimizer, opt_level=config.amp)
+        if config_1.Dataset.amp:
+            model, optimizer = amp.initialize(model, optimizer, opt_level=config_1.Dataset.amp)
         # turning on the DDIM Sampler from here!!!!!
         # the function  that we will be calling aaccording to the number of smaplign 
         # time steps relative to the train time steps !!!!!
         mse_loss = nn.MSELoss() # not reducing in order to ignore outside cases
         bg_loss =  nn.BCEWithLogitsLoss()
 
-        print(f"Training from epoch {next_epoch + 1} to {config.epochs}. {len(source_loader)} batches per epoch")
-        for ep in range(next_epoch, config.epochs):
+        print(f"Training from epoch {next_epoch + 1} to {config_1.Dataset.epochs}. {len(source_loader)} batches per epoch")
+        for ep in range(next_epoch, config_1.Dataset.epochs):
             start = datetime.now()
             model.train()
             train_one_epoch(
-                config,
+                config_1,
                 ep,
                 model,
                 device,
@@ -349,11 +329,11 @@ def main(config):
                 ema_params,
                 diffusion,
                 schedule_sampler,
-                ema_rate,mse_loss,bg_loss
+                ema_rate,mse_loss,bg_loss,config.wandb
                 )
             print(f"Epoch {ep + 1} took {datetime.now() - start}")
             
-            if config.lr_schedular:
+            if config_1.experiment_parameter.lr_schedular:
                 scheduler.step()
                 checkpoint = {
                     "run_id": run_id,
@@ -376,10 +356,10 @@ def main(config):
 
             # Save the model
             # We want to save the checkpoint of the last epoch, so that we can resume training later
-            save_path = os.path.join(config.output_dir, "ckpt_last.pth")
+            save_path = os.path.join(config_1.Dataset.output_dir, "ckpt_last.pth")
 
             # Keep previous checkpoint until we are sure that this saving goes through successfully.
-            backup_path = os.path.join(config.output_dir, "ckpt_last.backup.pth")
+            backup_path = os.path.join(config_1.Dataset.output_dir, "ckpt_last.backup.pth")
             if os.path.exists(save_path):
                 os.rename(save_path, backup_path)
 
@@ -402,18 +382,18 @@ def main(config):
             if os.path.exists(backup_path):
                 os.remove(backup_path)
 
-            if config.save and ((ep + 1) % config.save_every == 0 or (ep + 1) == config.epochs):
-                save_path = os.path.join(config.output_dir, f"ckpt_epoch_{ep + 1}.pth")
+            if config.save and ((ep + 1) % config_1.Dataset.save_every == 0 or (ep + 1) == config.epochs):
+                save_path = os.path.join(config_1.Dataset.output_dir, f"ckpt_epoch_{ep + 1}.pth")
                 torch.save(checkpoint, save_path)
                 # I should also save the ema checkpoint this is missing
 
                 print(f"Checkpoint saved at {save_path}")
 
-            if (ep + 1) % config.evaluate_every == 0 or (ep + 1) == config.epochs:
+            if (ep + 1) % config_1.evaluate_every == 0 or (ep + 1) == config_1.Dataset.epochs:
                 print("Starting evaluation")
                 
                 auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \
-                                        evaluate(config, 
+                                        evaluate(config_1, 
                                                 model,
                                                 ep+1,
                                                 device,
@@ -446,10 +426,10 @@ def train_one_epoch(
     diffusion,
     schedule_sampler,
     ema_rate,
-    mse_loss,bg_loss
+    mse_loss,bg_loss,wandb_flag
 ):
     gaze_to_save = 5
-    print_every = config.print_every
+    print_every = config.Dataset.print_every
     source_iter = iter(source_loader)
     n_iter = len(source_loader)
     kl_loss = nn.KLDivLoss(reduction="batchmean")
@@ -479,7 +459,7 @@ def train_one_epoch(
         micro_cond = {'images':s_rgb,
                       'face':s_heads,
                       'masks':s_masks,
-                      'noise_strength':config.offset_noise_strength,
+                      'noise_strength':config.experiment_parameter.offset_noise_strength,
                       }
         
         # return from the model
@@ -494,53 +474,33 @@ def train_one_epoch(
         losses = compute_losses()
         Xent_loss = bg_loss(losses["inout"].squeeze(), s_gaze_inside.squeeze())
 
-        if config.Debugging_maps:
+        if config.experiment_parameter.Debugging_maps:
             validate_images(
                                                     
                                                     s_rgb[:gaze_to_save].detach(),
                                                     s_gaze_heatmaps[:gaze_to_save].squeeze(1).detach(),
                                                     losses["output"][:gaze_to_save].detach(),
                                                     coordinates_train[:gaze_to_save].detach(),
-                                                    epoch,config.Debugging_maps
+                                                    epoch,config.experiment_parameter.Debugging_maps
                                                     )
-            # print(s_gaze_heatmaps.squeeze(1).shape,losses["output"].shape)
-        #     print(torch.min(s_gaze_heatmaps.squeeze(1)))
-        #     print(torch.min(losses["output"]))
-        #     print(losses["output"][0])
-            # print(torch.nn.functional.kl_div(s_gaze_heatmaps.squeeze(1),losses["output"]))
-        # # ## APPROACH 2 for calculating the loss
-        # print(losses["location"].shape,gaze_points.shape)
-        if config.other_loss:
-            # output_loss = mse_loss(losses["location"],gaze_points.squeeze(1))
+        s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
+        s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
+        if config.losses_parameters.other_loss:
             output_loss = mse_loss(losses["location"], torch.flip(gaze_points.squeeze(1), [1]))
-        # this is where we are controlling the weights  of the losses. 
-        if config.source_dataset=="videoattentiontarget":
-                s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
-                s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
-        else:
-                # s_rec_loss = (losses["loss"] * weights).mean()
-                s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
-                s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
-        if config.other_loss:
-            if config.kl_div_loss:
-                # the_input = F.log_softmax(s_gaze_heatmaps.squeeze(1), dim=1)
+            if config.losses_parameters.kl_div_loss:
                 the_input = F.log_softmax(s_gaze_heatmaps.squeeze(1).view(s_gaze_heatmaps.shape[0],-1), dim=1)
-                # print(the_input.shape)
-                # the_target =F.softmax(losses["output"] , dim=1)
                 the_target =F.softmax(losses["output"].view(s_gaze_heatmaps.shape[0],-1) , dim=1)
-                # print(the_target.shape)
                 the_kl_loss = kl_loss(the_input,the_target)
                 total_loss = s_rec_loss +  10*the_kl_loss
-            # total_loss = s_rec_loss +  0.1*the_kl_loss
             else:
                 total_loss = 100000*s_rec_loss + 10000*output_loss
         else:
-            if config.x_loss:
+            if config.losses_parameters.x_loss:
                 total_loss = s_rec_loss + 0.01*Xent_loss
             else:
                 total_loss = s_rec_loss
 
-        if config.amp:
+        if config.Dataset.amp:
             with amp.scale_loss(total_loss, optimizer) as scaled_loss:
                 scaled_loss.backward()
         else:
@@ -556,13 +516,13 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         if (batch + 1) % print_every == 0 or (batch + 1) == n_iter:
-            log = f"Training - EPOCH {(epoch + 1):02d}/{config.epochs:02d} BATCH {(batch + 1):04d}/{n_iter} "
+            log = f"Training - EPOCH {(epoch + 1):02d}/{config.Dataset.epochs:02d} BATCH {(batch + 1):04d}/{n_iter} "
             log += f"\t TASK LOSS (L2) {s_rec_loss:.6f}"
             print(log)
 
-        if config.wandb:
-            if config.other_loss:
-                if config.kl_div_loss:
+        if wandb_flag:
+            if config.losses_parameters.other_loss:
+                if config.losses_parameters.kl_div_loss:
                     log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
@@ -583,7 +543,7 @@ def train_one_epoch(
                         "lr_resnet":optimizer.param_groups[1]['lr'],
                         }
             else:
-                    if config.x_loss:
+                    if config.losses_parameters.x_loss:
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
@@ -693,8 +653,8 @@ def validate_images(image,gazemap_gn,gazemap_pred,vector,epoch,debug=False,sorte
 def evaluate(config, model, epoch,device, loader, sample_fn):
     model.eval()
 
-    output_size = config.output_size
-    print_every = config.print_every
+    output_size = config.Dataset.output_size
+    print_every = config.Dataset.print_every
 
     auc_meter = AverageMeter()
     min_dist_meter = AverageMeter()
@@ -755,7 +715,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
 
             # Sets the number of jobs according to batch size and cpu counts. In any case, no less than 1 and more than
             # 8 jobs are allocated.
-            n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.batch_size))# njobs = 8
+            n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.Dataset.batch_size))# njobs = 8
             metrics = Parallel(n_jobs=n_jobs)(
                 delayed(evaluate_one_item)(
                     gaze_heatmap_pred[b_i], eye_coords[b_i], gaze_coords[b_i], img_size[b_i], output_size
@@ -832,21 +792,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                     f"\t MIN. AO. {ao_meter.avg:.3f}"
 
                 )
-                if (batch + 1) == len(loader) or config.Debugging_maps:
-                    # wandb_gaze_heatmap_images= validate_images(
-                                                    
-                    #                                 images_copy[:gaze_to_save],
-                    #                                 gazer_mask[:gaze_to_save],
-                    #                                 gaze_heatmap_pred[:gaze_to_save],
-                    #                                 coordinates_test[:gaze_to_save],
-                    #                                 epoch,config.Debugging_maps
-                    #                                 )
+                if (batch + 1) == len(loader) or config.experiment_parameter.Debugging_maps:
                     wandb_gaze_heatmap_images= validate_images(
                                                     new_image,
                                                     new_gazer_mask,
                                                     new_gaze_heatmap_pred,
                                                     new_coordinate_test,
-                                                    epoch,config.Debugging_maps,sorted_list=previous_sorted_list
+                                                    epoch,config.experiment_parameter.Debugging_maps,sorted_list=previous_sorted_list
                                                     )
     return (
         auc_meter.avg,
@@ -914,5 +866,5 @@ if __name__ == "__main__":
 
     I didnot find anything like that in the github 
     '''
-
-    main(get_config())
+    x1,x2,x3=get_config()
+    main(x1,x2,x3)

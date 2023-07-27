@@ -57,6 +57,7 @@ class GazeFollow(Dataset):
         df = pd.read_csv(labels_path, sep=",", names=column_names, usecols=column_names, index_col=False)
         if is_test_set:
             # to allow for subsampling of the test set
+            # this was the experiment that francesco ask me to do
             if self.gaze_point_threshold > 0:
                 original_size = len(df)
                 # Copy df

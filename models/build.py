@@ -2,34 +2,34 @@ import torch
 from .SpatialDepthLateFusion_2 import SpatialDepthLateFusion_2
 from .gaze_net_module import gaze_net_module
 
-def get_model(config, device=torch.device("cuda")):
-    gaze_model = gaze_net_module(       resnet_scene_layers=config.list_resnet_scene_layers,
-                                        resnet_face_layers=config.list_resnet_face_layers,
-                                        resnet_scene_inplanes=config.resnet_scene_inplanes,
-                                        resnet_face_inplanes=config.resnet_face_inplanes,
-                                        attention_module=config.adm_attention_module,
-                                        unet_context_vector=config.unet_context_vector,
+def get_model(config, config_2,device=torch.device("cuda")):
+    gaze_model = gaze_net_module(       resnet_scene_layers=config_2.Gaze.list_resnet_scene_layers,
+                                        resnet_face_layers=config_2.Gaze.list_resnet_face_layers,
+                                        resnet_scene_inplanes=config_2.Gaze.resnet_scene_inplanes,
+                                        resnet_face_inplanes=config_2.Gaze.resnet_face_inplanes,
+                                        attention_module=config_2.Gaze.adm_attention_module,
+                                        unet_context_vector=config.Diffusion.unet_context_vector,
 
                 )
     model = SpatialDepthLateFusion_2(
             gaze_model=gaze_model,
-            unet_inout_channels=config.unet_inout_channels,
-            unet_inplanes=config.unet_inplanes,
-            unet_residual=config.unet_residual,
-            unet_attention_levels=config.list_unet_attention_levels,
-            unet_inplanes_multipliers=config.list_unet_inplanes_multipliers,
-            unet_spatial_tf_heads=config.unet_spatial_tf_heads,
-            unet_spatial_tf_layers=config.unet_spatial_tf_layers,
-            unet_context_vector=config.unet_context_vector,
-            learn_sigma=config.adm_learn_sigma,
-            dropout=config.unet_dropout,
+            unet_inout_channels=config.Diffusion.unet_inout_channels,
+            unet_inplanes=config.Diffusion.unet_inplanes,
+            unet_residual=config.Diffusion.unet_residual,
+            unet_attention_levels=config.Diffusion.list_unet_attention_levels,
+            unet_inplanes_multipliers=config.Diffusion.list_unet_inplanes_multipliers,
+            unet_spatial_tf_heads=config.Diffusion.unet_spatial_tf_heads,
+            unet_spatial_tf_layers=config.Diffusion.unet_spatial_tf_layers,
+            unet_context_vector=config.Diffusion.unet_context_vector,
+            learn_sigma=config.Diffusion.adm_learn_sigma,
+            dropout=config.Diffusion.unet_dropout,
             )
     modules = []
     # all the frezing stuff is set to false 
-    if config.freeze_scene:
+    if config_2.Gaze.freeze_scene:
         modules += [model.gaze_model.scene_backbone]
 
-    if config.freeze_face:
+    if config_2.Gaze.freeze_face:
         modules += [model.gaze_model.face_backbone]
     for module in modules:
         for layer in module.children():

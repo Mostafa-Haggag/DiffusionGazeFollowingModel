@@ -112,7 +112,7 @@ def get_angular_error(p1, p2):
 
 def get_memory_format(config):
     # set to false 
-    if config.channels_last:
+    if config.Dataset.channels_last:
         return torch.channels_last
 
     return torch.contiguous_format

@@ -19,7 +19,17 @@ This is a Gaze Following model based on diffusion models
 ## Command to run the code
 
 * If you donot call `--is_subsample_test_set`  this means that you are sampling 10% of evaluation set. If you call it, then you are **not** sampling the test set for the gazefollowing
-* To run a command without BCE loss and on the inside gaze data-set with full evaluation on test set`
+* To run a command without BCE loss and on the inside gaze data-set with full evaluation on test set
+
+$$
+
+$$
+
+```
+python3 main.py --yaml_diffusion diffusion.yaml --yaml_gaze gaze.yaml --tag trial_gaze
+```
+
+
 
 ```
 python3 main.py --init_weights pretrained/init_weights.pt --watch_wandb --tag example_1 --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag --epochs 30 --lr_schedular --source_dataset_dir datasets/gazefollow_extended --source_dataset gazefollow --is_subsample_test_set --amp O1

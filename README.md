@@ -8,16 +8,17 @@ This is a Gaze Following model based on diffusion models
 
 * In the main function in line 86 you will find a function called `get_model`, it controls the trainable model. Open file `build.py` under the models folder and you will find `gaze_model` under the `get_model` function and this is mainly a model containing the 2 resnets and returns to me 2 things:
   * conditioning: this will differ from one architecture to another.
-  * scene_face_feat: for the bce loss to predict inside outside the scene value, you need to concat the scene and the face features outputted from the 2 resent to have an output of size (7,7,2048) which get fed to sequential network to output the in/out scene label predicted. 
+  * scene_face_feat: for the bce loss to predict inside outside the scene value, you need to concat the scene and the face features outputted from the 2 resent to have an output of size (7,7,2048) which get fed to sequential network to output the in/out scene label predicted.
 * This `gaze_model` should be changeable from architecture to the other as long as the model returns both a conditioning and scene_face_feat
 * Use `config.unet_context_vector` to control the size of the context vector for the cross attention
 * if you are freezing something, check the part in the function of `get_model`to control what part of the model to freeze
 * When loading pretrained function, for the model that I am using I had to rename the some stuff in the init weights so that it fits and works properly, this part will need to be configurable from one model to another.
+* The `optimizer.py` i am diviiding my model into 2 parts  a part with diffusion and part with gaze, so make sure whatever you do, always make sure that the lr is fixed. Check how it is implemented because it is really important, you will recogonize that it will make problems for you. It will need to be changed.
 * I looked through out the full code to think if there are interconnected parts but I couldn't find. Let me know how it goes
 
 ## Command to run the code
 
-* If you donot call `--is_subsample_test_set`  this means that you are sampling 10% of evaluation set. If you call it, then you are **not** sampling the test set for the gazefollowing 
+* If you donot call `--is_subsample_test_set`  this means that you are sampling 10% of evaluation set. If you call it, then you are **not** sampling the test set for the gazefollowing
 * To run a command without BCE loss and on the inside gaze data-set with full evaluation on test set`
 
 ```
@@ -46,14 +47,13 @@ sudo apt install python3.10
   python3.10-m pip install --user virtualenv
   python3 -m venv thesis_env
   ```
-
 * Activate the enviroment using `source thesis_env\bin\activate` and install the requirements commands
 
 ```
 pip install -r requirements.txt
 ```
 
-* Remember to install apex using the following [link](https://github.com/NVIDIA/apex) 
+* Remember to install apex using the following [link](https://github.com/NVIDIA/apex)
 
 ## Train and evaluate
 
@@ -228,4 +228,3 @@ options:
                         checkpoint only to allow resuming
 
 ```
-

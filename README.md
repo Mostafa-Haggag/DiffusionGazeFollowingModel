@@ -25,20 +25,6 @@ This is a Gaze Following model based on diffusion models
 python3 main.py --yaml_diffusion diffusion.yaml --yaml_gaze gaze.yaml --tag trial_gaze
 ```
 
-****
-
-This is not used anymore
-
-```
-python3 main.py --init_weights pretrained/init_weights.pt --watch_wandb --tag example_1 --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag --epochs 30 --lr_schedular --source_dataset_dir datasets/gazefollow_extended --source_dataset gazefollow --is_subsample_test_set --amp O1
-```
-
-* To run a command with the BCE loss and on the full training data-set with full evaluation on test set
-
-```
-python3 main.py --init_weights pretrained/init_weights.pt --watch_wandb --tag example_1 --adm_predict_xstart --diff_normalization 0.1 --norm_std_flag --random_flag --epochs 30 --lr_schedular --source_dataset_dir datasets/gazefollow_extended --source_dataset gazefollow --x_loss --is_subsample_test_set --amp O1
-```
-
 ## Requirements
 
 * Install  Python 3.10.11

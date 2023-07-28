@@ -15,7 +15,7 @@ from torchvision.transforms.functional import (
     crop,
 )
 
-from datasets.transforms.ToColorMap import ToColorMap
+from gaze.datasets.transforms.ToColorMap import ToColorMap
 from utils import get_head_mask, get_label_map
 
 class GazeFollow(Dataset):

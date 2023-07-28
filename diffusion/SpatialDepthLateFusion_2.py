@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from models.modules.new_ADM_final.unet import UNetModel
+from diffusion.modules.new_ADM_final.unet import UNetModel
 import math
 
 class SpatialDepthLateFusion_2(nn.Module):

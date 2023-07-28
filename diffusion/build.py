@@ -1,6 +1,6 @@
 import torch
 from .SpatialDepthLateFusion_2 import SpatialDepthLateFusion_2
-from .gaze_net_module import gaze_net_module
+from gaze.gaze_net_module import gaze_net_module
 
 def get_model(config, config_2,device=torch.device("cuda")):
     gaze_model = gaze_net_module(       resnet_scene_layers=config_2.Gaze.list_resnet_scene_layers,

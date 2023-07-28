@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.modules import ResNet
+from gaze.modules import ResNet
 class gaze_net_module(nn.Module):
         def __init__(
         self,

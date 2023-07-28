@@ -1,6 +1,6 @@
 Dataset:
   source_dataset: "gazefollow"
-  source_dataset_dir: "datasets/gazefollow_extended"
+  source_dataset_dir: "gaze/datasets/gazefollow_extended"
   num_workers: 12
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"

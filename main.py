@@ -39,13 +39,13 @@ except ImportError:
     print("AMP is not available")
 
 from config import get_config
-from datasets import get_dataset
-from models import get_model, load_pretrained
+from gaze.datasets import get_dataset
+from diffusion import get_model, load_pretrained
 from optimizer import get_optimizer
 from schedular import LinearWarmupCosineAnnealingLR
-from models.modules.new_ADM_final.script_util import create_gaussian_diffusion
-from models.modules.new_ADM_final.resample import create_named_schedule_sampler
-from models.modules.new_ADM_final.nn import update_ema
+from diffusion.modules.new_ADM_final.script_util import create_gaussian_diffusion
+from diffusion.modules.new_ADM_final.resample import create_named_schedule_sampler
+from diffusion.modules.new_ADM_final.nn import update_ema
 
 import copy
 from utils import (

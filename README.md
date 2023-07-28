@@ -14,7 +14,7 @@ This is a Gaze Following model based on diffusion models
 * if you are freezing something, check the part in the function of `get_model`to control what part of the model to freeze
 * When loading pretrained function, for the model that I am using I had to rename the some stuff in the init weights so that it fits and works properly, this part will need to be configurable from one model to another.
 * The `optimizer.py` i am diviiding my model into 2 parts  a part with diffusion and part with gaze, so make sure whatever you do, always make sure that the lr is fixed. Check how it is implemented because it is really important, you will recogonize that it will make problems for you. It will need to be changed.
-* I looked through out the full code to think if there are interconnected parts but I couldn't find. Let me know how it goes
+* I looked through out the full code to think if there are interconnected parts but I couldn't find. Let mdife know how it goes
 
 ## Command to run the code
 

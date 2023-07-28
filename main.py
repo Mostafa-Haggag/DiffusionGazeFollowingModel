@@ -389,7 +389,7 @@ def main(config,config_1,config_2):
 
                 print(f"Checkpoint saved at {save_path}")
 
-            if (ep + 1) % config_1.evaluate_every == 0 or (ep + 1) == config_1.Dataset.epochs:
+            if (ep + 1) % config_1.Dataset.evaluate_every == 0 or (ep + 1) == config_1.Dataset.epochs:
                 print("Starting evaluation")
                 
                 auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \

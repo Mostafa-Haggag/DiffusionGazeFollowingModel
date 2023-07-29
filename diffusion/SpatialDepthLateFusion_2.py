@@ -48,12 +48,15 @@ class SpatialDepthLateFusion_2(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-    def forward(self,heat_map,time, images, face,masks):
+    def forward(self,heat_map,time, images, face,masks,depth = None):
         # This part is related to x_loss
         # Scene_face_feat should contain output of resnet of face and head
         # Both the condiitoning and scene face feat should be changed according 
         # To what gaze model you are using
-        scene_face_feat,conditioning=self.gaze_model(images, face,masks)
+        if depth == None:
+            scene_face_feat,conditioning=self.gaze_model(images, face,masks)
+        else:
+            scene_face_feat,conditioning=self.gaze_model(images, face,masks,depth)
         # this part is to be used during the X-loss only 
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)

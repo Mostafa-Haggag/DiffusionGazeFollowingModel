@@ -19,7 +19,7 @@ from gaze.datasets.transforms.ToColorMap import ToColorMap
 from utils import get_head_mask, get_label_map
 
 class GazeFollow(Dataset):
-    def __init__(self, data_dir, labels_path,random_size=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
+    def __init__(self, data_dir, labels_path,random_size=False,depth_on=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
                  gaze_point_threshold=0):
         self.data_dir = data_dir
         self.input_size = input_size
@@ -27,6 +27,7 @@ class GazeFollow(Dataset):
         self.is_test_set = is_test_set
         self.gaze_point_threshold=gaze_point_threshold
         self.head_bbox_overflow_coeff = 0.1  
+        self.depth_on = depth_on
         self.image_transform = transforms.Compose(
             [
                 transforms.Resize((input_size, input_size)),
@@ -35,6 +36,9 @@ class GazeFollow(Dataset):
             ]
         )
         self.random_size=random_size
+        self.depth_transform = transforms.Compose(
+            [ToColorMap(plt.get_cmap("magma")), transforms.Resize((input_size, input_size)), transforms.ToTensor()]
+        )
         column_names = [
             "path",
             "idx",
@@ -238,7 +242,13 @@ class GazeFollow(Dataset):
 
         head = get_head_mask(x_min, y_min, x_max, y_max, width, height, resolution=self.input_size).unsqueeze(0)
         # get the mask black and white for the head 
-        
+        if self.depth_on:
+            depth_path = path.replace("train", "depth").replace("test2", "depth2")
+            depth = Image.open(os.path.join(self.data_dir, depth_path))
+            depth = depth.convert("L")
+                    # ... and depth
+            if self.depth_transform is not None:
+                depth = self.depth_transform(depth)
         # Crop the face
         face = img.crop((int(x_min), int(y_min), int(x_max), int(y_max)))
 
@@ -265,19 +275,34 @@ class GazeFollow(Dataset):
                                             x_max*self.input_size/width,y_max*self.input_size/height]).numpy()
         information_tensor = information_tensor.astype(int)
         information_tensor = np.clip(information_tensor, 0, self.input_size - 1)
-        return (
-            img,
-            # depth,
-            face,
-            head,
-            gaze_heatmap,
-            torch.FloatTensor([eye_coords]),
-            torch.FloatTensor([gaze_coords]),
-            torch.IntTensor([bool(gaze_inside)]),
-            torch.IntTensor([width, height]),
-            path,
-            information_tensor
-        )
+        if self.depth_on:
+            return (
+                img,
+                depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([bool(gaze_inside)]),
+                torch.IntTensor([width, height]),
+                path,
+                information_tensor
+            )
+        else:
+            return (
+                img,
+                # depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([bool(gaze_inside)]),
+                torch.IntTensor([width, height]),
+                path,
+                information_tensor
+            ) 
 
     def __get_test_item__(self, index):
         eye_coords = []
@@ -322,8 +347,12 @@ class GazeFollow(Dataset):
 
         # Crop the face
         face = img.crop((int(x_min), int(y_min), int(x_max), int(y_max)))
-
-
+        if self.depth_on:
+            depth_path = path.replace("train", "depth").replace("test2", "depth2")
+            depth = Image.open(os.path.join(self.data_dir, depth_path))
+            depth = depth.convert("L")
+            if self.depth_transform is not None:
+                depth = self.depth_transform(depth)
         # Apply transformation to images...
         if self.image_transform is not None:
             img = self.image_transform(img)
@@ -352,19 +381,32 @@ class GazeFollow(Dataset):
                                             x_max*self.input_size/width,y_max*self.input_size/height]).numpy()
         information_tensor = information_tensor.astype(int)
         information_tensor = np.clip(information_tensor, 0, self.input_size - 1)
-        return (
-            img,
-            # depth,
-            face,
-            head,
-            gaze_heatmap,
-            eye_coords,
-            gaze_coords,
-            gaze_inside,
-            torch.IntTensor([width, height]),
-            path,
-            information_tensor
-        )
+        if self.depth_on:
+            return (img,
+                    depth,
+                    face,
+                    head,
+                    gaze_heatmap,
+                    eye_coords,
+                    gaze_coords,
+                    gaze_inside,
+                    torch.IntTensor([width, height]),
+                    path,
+                    information_tensor
+                )
+        else:
+            return  (img,
+                    # depth,
+                    face,
+                    head,
+                    gaze_heatmap,
+                    eye_coords,
+                    gaze_coords,
+                    gaze_inside,
+                    torch.IntTensor([width, height]),
+                    path,
+                    information_tensor
+                )
 
     def get_head_coords(self, path):
         if not self.is_test_set:

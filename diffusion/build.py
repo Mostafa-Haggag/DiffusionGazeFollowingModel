@@ -2,14 +2,14 @@ import torch
 from .SpatialDepthLateFusion_2 import SpatialDepthLateFusion_2
 from gaze.gaze_net_module import gaze_net_module
 
-def get_model(config, config_2,device=torch.device("cuda")):
-    gaze_model = gaze_net_module(       resnet_scene_layers=config_2.Gaze.list_resnet_scene_layers,
-                                        resnet_face_layers=config_2.Gaze.list_resnet_face_layers,
-                                        resnet_scene_inplanes=config_2.Gaze.resnet_scene_inplanes,
-                                        resnet_face_inplanes=config_2.Gaze.resnet_face_inplanes,
-                                        attention_module=config_2.Gaze.adm_attention_module,
+def get_model(config,device=torch.device("cuda")):
+    gaze_model = gaze_net_module(       resnet_scene_layers=config.Gaze.list_resnet_scene_layers,
+                                        resnet_face_layers=config.Gaze.list_resnet_face_layers,
+                                        resnet_scene_inplanes=config.Gaze.resnet_scene_inplanes,
+                                        resnet_face_inplanes=config.Gaze.resnet_face_inplanes,
+                                        attention_module=config.Gaze.adm_attention_module,
                                         unet_context_vector=config.Diffusion.unet_context_vector,
-
+                                        depth_flag=config.Gaze.depth_flag
                 )
     model = SpatialDepthLateFusion_2(
             gaze_model=gaze_model,
@@ -26,10 +26,10 @@ def get_model(config, config_2,device=torch.device("cuda")):
             )
     modules = []
     # all the frezing stuff is set to false 
-    if config_2.Gaze.freeze_scene:
+    if config.Gaze.freeze_scene:
         modules += [model.gaze_model.scene_backbone]
 
-    if config_2.Gaze.freeze_face:
+    if config.Gaze.freeze_face:
         modules += [model.gaze_model.face_backbone]
     for module in modules:
         for layer in module.children():

@@ -67,7 +67,7 @@ def master_params_to_state_dict(model,master_params):
 
 
 
-def main(config,config_1,config_2):
+def main(config,config_1):
     # Create output dir if training
     if not config_1.Dataset.eval_weights:
         os.makedirs(config_1.Dataset.output_dir, exist_ok=True)
@@ -81,7 +81,7 @@ def main(config,config_1,config_2):
     # Load model
     print("Loading model")
     # YOU  got the model 
-    model = get_model(config_1,config_2, device=device).to(device,memory_format=get_memory_format(config_1))
+    model = get_model(config_1, device=device).to(device,memory_format=get_memory_format(config_1))
     # this the spatiiala transform number 2 contianing everything that I need in here right now.  
 
     print("The diffusion ")
@@ -434,18 +434,34 @@ def train_one_epoch(
     n_iter = len(source_loader)
     kl_loss = nn.KLDivLoss(reduction="batchmean")
     for batch in range(n_iter):# iterate for number of things
-        data_source = next(source_iter)
-        (
-            s_rgb,
-            s_heads,# the face
-            s_masks,
-            s_gaze_heatmaps,
-            _,
-            gaze_points,
-            s_gaze_inside,# boolean yes or no
-            _,
-            _,coordinates_train
-        ) = data_source
+        if config.Gaze.depth_flag:
+            data_source = next(source_iter)
+            (
+                s_rgb,
+                s_depth,
+                s_heads,# the face
+                s_masks,
+                s_gaze_heatmaps,
+                _,
+                gaze_points,
+                s_gaze_inside,# boolean yes or no
+                _,
+                _,coordinates_train
+            ) = data_source 
+            s_depth = s_depth.to(device, non_blocking=True, memory_format=get_memory_format(config))
+        else:
+            data_source = next(source_iter)
+            (
+                s_rgb,
+                s_heads,# the face
+                s_masks,
+                s_gaze_heatmaps,
+                _,
+                gaze_points,
+                s_gaze_inside,# boolean yes or no
+                _,
+                _,coordinates_train
+            ) = data_source
         # the part of the samplar is ready in here. 
         # sampler is outside 
         t, weights = schedule_sampler.sample(s_rgb.shape[0], device)
@@ -456,12 +472,19 @@ def train_one_epoch(
         s_gaze_inside = s_gaze_inside.to(device, non_blocking=True).float()
         gaze_points = gaze_points.to(device, non_blocking=True, memory_format=get_memory_format(config))
         s_masks = s_masks.to(device, non_blocking=True, memory_format=get_memory_format(config))
-        micro_cond = {'images':s_rgb,
+        if config.Gaze.depth_flag:
+            micro_cond = {'images':s_rgb,
                       'face':s_heads,
                       'masks':s_masks,
                       'noise_strength':config.experiment_parameter.offset_noise_strength,
+                      'depth':s_depth
                       }
-        
+        else:
+            micro_cond = {'images':s_rgb,
+                'face':s_heads,
+                'masks':s_masks,
+                'noise_strength':config.experiment_parameter.offset_noise_strength,
+                }
         # return from the model
         # you didnot normalize here at all 
         compute_losses = functools.partial(
@@ -673,17 +696,32 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
     # loader has size of 150
     with torch.no_grad():# you have more than loader
         for batch, data in enumerate(loader):
-            (
-                images,
-                faces,
-                masks,
-                gazer_mask,
-                eye_coords,
-                gaze_coords,
-                gaze_inout,
-                img_size,
-                _,coordinates_test
-            ) = data
+            if config.Gaze.depth_flag:    
+                (
+                    images,
+                    depth,
+                    faces,
+                    masks,
+                    gazer_mask,
+                    eye_coords,
+                    gaze_coords,
+                    gaze_inout,
+                    img_size,
+                    _,coordinates_test
+                ) = data
+                depth = depth.to(device, non_blocking=True, memory_format=get_memory_format(config))
+            else:
+                (
+                    images,
+                    faces,
+                    masks,
+                    gazer_mask,
+                    eye_coords,
+                    gaze_coords,
+                    gaze_inout,
+                    img_size,
+                    _,coordinates_test
+                ) = data
             images_copy= images
             # images = torch.cat((images, masks), dim=1)
             images = images.to(device, non_blocking=True, memory_format=get_memory_format(config))
@@ -695,7 +733,14 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             # print(gaze_inout[0].shape)
             # print(gaze_coords[0].shape)
             # print(coordinates_test.shape)
-            micro_cond = {'images':images,
+            if config.Gaze.depth_flag:    
+                micro_cond = {'images':images,
+                      'face':faces,
+                      'masks':masks,
+                      'depth': depth
+                      }
+            else:
+                micro_cond = {'images':images,
                       'face':faces,
                       'masks':masks
                       }
@@ -867,4 +912,5 @@ if __name__ == "__main__":
     I didnot find anything like that in the github 
     '''
     x1,x2,x3=get_config()
-    main(x1,x2,x3)
+    merged_config = OmegaConf.merge(x2, x3)
+    main(x1,merged_config)

@@ -6,12 +6,12 @@ from .GazeFollow import GazeFollow
 from .VideoAttentionTarget import VideoAttentionTargetImages
 
 
-def get_loader(name: str, root_dir: str, random_flag=False,x_loss=False,input_size=224, output_size=64, batch_size=48, num_workers=6, is_train=True,is_subsample_test_set=True,gaze_point_threshold=0):
+def get_loader(name: str, root_dir: str, random_flag=False,depth_on=False,x_loss=False,input_size=224, output_size=64, batch_size=48, num_workers=6, is_train=True,is_subsample_test_set=True,gaze_point_threshold=0):
     if name == "gazefollow":# we enter into here
         labels = os.path.join(root_dir, "train_annotations_release.txt" if is_train else "test_annotations_release.txt")
         # root_dir datasets/gazefollow_extended
         # labels they are coming from file 
-        dataset = GazeFollow(root_dir, labels, random_size=random_flag,x_loss=x_loss,input_size=input_size, output_size=output_size, is_test_set=not is_train,is_subsample_test_set=is_subsample_test_set,gaze_point_threshold=gaze_point_threshold)
+        dataset = GazeFollow(root_dir, labels, random_size=random_flag,depth_on=depth_on,x_loss=x_loss,input_size=input_size, output_size=output_size, is_test_set=not is_train,is_subsample_test_set=is_subsample_test_set,gaze_point_threshold=gaze_point_threshold)
         loader = DataLoader(
             dataset=dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers, pin_memory=True
         )
@@ -35,6 +35,7 @@ def get_dataset(config):
         name=config.Dataset.source_dataset,
         root_dir=config.Dataset.source_dataset_dir,
         random_flag=config.experiment_parameter.random_flag,
+        depth_on=config.Gaze.depth_flag,
         input_size=config.Dataset.input_size,
         output_size=config.Dataset.output_size,
         batch_size=config.Dataset.batch_size,
@@ -47,6 +48,7 @@ def get_dataset(config):
         name=config.Dataset.source_dataset,
         root_dir=config.Dataset.source_dataset_dir,
         random_flag=config.experiment_parameter.random_flag,
+        depth_on=config.Gaze.depth_flag,
         input_size=config.Dataset.input_size,
         output_size=config.Dataset.output_size,
         batch_size=config.Dataset.batch_size,

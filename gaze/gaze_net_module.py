@@ -17,18 +17,17 @@ class gaze_net_module(nn.Module):
             self.avgpool = nn.AvgPool2d(7, stride=1)
             self.scene_backbone = ResNet(in_channels=4, layers=resnet_scene_layers, inplanes=resnet_scene_inplanes)
             self.face_backbone = ResNet(in_channels=3, layers=resnet_face_layers, inplanes=resnet_face_inplanes)
-            if depth_flag:
+            self.depth_flag=depth_flag
+            if self.depth_flag:
                 self.depth_backbone = ResNet(in_channels=4, layers=resnet_scene_layers, inplanes=resnet_scene_inplanes)
-                        # Encoding for scene saliency
+                # Encoding for scene saliency
                 self.scene_encoder = Encoder()
-
                 # Encoding for depth saliency
                 self.depth_encoder = Encoder()
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
             self.attn = nn.Linear(1808, 1 * 7 * 7)
             self.attention_module = attention_module
             self.unet_context_vector=unet_context_vector
-            self.depth_flag=depth_flag
         def forward(self, images, face,masks,depth=None):
             if self.depth_flag:
                     images = torch.cat((images, masks), dim=1)

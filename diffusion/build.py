@@ -23,6 +23,7 @@ def get_model(config,device=torch.device("cuda")):
             unet_context_vector=config.Diffusion.unet_context_vector,
             learn_sigma=config.Diffusion.adm_learn_sigma,
             dropout=config.Diffusion.unet_dropout,
+            depth_flag=config.Gaze.depth_flag,
             )
     modules = []
     # all the frezing stuff is set to false 

@@ -36,10 +36,10 @@ class gaze_net_module(nn.Module):
                     scene_feat = self.scene_backbone(images)
                     face_feat = self.face_backbone(face)
                     depth_feat = self.depth_backbone(depth)
-                    scene_face = torch.cat((scene_feat, face_feat), 1)
+                    scene_face_feat = torch.cat((scene_feat, face_feat), 1)
                     depth_face = torch.cat((depth_feat, face_feat), 1)
                     # Scene encode
-                    scene_encoding = self.scene_encoder(scene_face)
+                    scene_encoding = self.scene_encoder(scene_face_feat)
 
                     # Depth encoding
                     depth_encoding = self.depth_encoder(depth_face)

@@ -77,7 +77,7 @@ def main(config,config_1):
     source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
     device = torch.device(config_1.Dataset.device) # the device that you will be working with . 
     print(f"Running on {device}")
-
+    torch.autograd.set_detect_anomaly(True)
     # Load model
     print("Loading model")
     # YOU  got the model 

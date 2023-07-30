@@ -5,8 +5,10 @@ from gaze.gaze_net_module import gaze_net_module
 def get_model(config,device=torch.device("cuda")):
     gaze_model = gaze_net_module(       resnet_scene_layers=config.Gaze.list_resnet_scene_layers,
                                         resnet_face_layers=config.Gaze.list_resnet_face_layers,
+                                        resnet_depth_layers=config.Gaze.list_resnet_depth_layers,
                                         resnet_scene_inplanes=config.Gaze.resnet_scene_inplanes,
                                         resnet_face_inplanes=config.Gaze.resnet_face_inplanes,
+                                        resnet_depth_inplanes=config.Gaze.resnet_depth_inplanes,
                                         attention_module=config.Gaze.adm_attention_module,
                                         unet_context_vector=config.Diffusion.unet_context_vector,
                                         depth_flag=config.Gaze.depth_flag

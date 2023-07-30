@@ -7,8 +7,10 @@ class gaze_net_module(nn.Module):
         self,
         resnet_scene_layers=[3, 4, 6, 3, 2],
         resnet_face_layers=[3, 4, 6, 3, 2],
+        resnet_depth_layers=[3, 4, 6, 3, 2],
         resnet_scene_inplanes=64,
         resnet_face_inplanes=64,
+        resnet_depth_inplanes=64,
         attention_module=False,
         unet_context_vector=1024,
         depth_flag=False
@@ -19,7 +21,7 @@ class gaze_net_module(nn.Module):
             self.face_backbone = ResNet(in_channels=3, layers=resnet_face_layers, inplanes=resnet_face_inplanes)
             self.depth_flag=depth_flag
             if self.depth_flag:
-                self.depth_backbone = ResNet(in_channels=4, layers=resnet_scene_layers, inplanes=resnet_scene_inplanes)
+                self.depth_backbone = ResNet(in_channels=4, layers=resnet_depth_layers, inplanes=resnet_depth_inplanes)
                 # Encoding for scene saliency
                 self.scene_encoder = Encoder()
                 # Encoding for depth saliency

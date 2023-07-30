@@ -77,7 +77,6 @@ def main(config,config_1):
     source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
     device = torch.device(config_1.Dataset.device) # the device that you will be working with . 
     print(f"Running on {device}")
-    torch.autograd.set_detect_anomaly(True)
     # Load model
     print("Loading model")
     # YOU  got the model 
@@ -289,10 +288,11 @@ def main(config,config_1):
         elif config.wandb:
                 run_id = wandb.util.generate_id()
                 print(f"Starting a new wandb run with id {run_id}")
-
+                config_dict = OmegaConf.to_container(config_1, resolve=True)
+                config_dict.update(vars(config))
                 wandb.init(
                     id=run_id,
-                    config=config,
+                    config=config_dict,
                     tags=["spatial_depth_late_fusion", config_1.Dataset.source_dataset],
                     save_code=True
                 )

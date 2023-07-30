@@ -11,9 +11,16 @@ Gaze:
       - 6
       - 3
       - 2
+    list_resnet_depth_layers:
+      - 3
+      - 4
+      - 6
+      - 3
+      - 2
     resnet_scene_inplanes: 64
     resnet_face_inplanes: 64
+    resnet_depth_inplanes: 64
     adm_attention_module: false
     freeze_scene: false
     freeze_face: false
-    depth_flag: false 
+    depth_flag: true 

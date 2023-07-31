@@ -131,7 +131,7 @@ def get_config():
     # Update output dir
     args.model_id = f"spatial_depth_late_fusion_{config_1.Dataset.source_dataset}"
     args.output_dir = os.path.join(config_1.Dataset.output_dir, args.model_id, args.tag)
-
+    config_1.Dataset.output_dir =os.path.join(config_1.Dataset.output_dir, args.model_id, args.tag)
     # Reverse resume flag to ease my life
     args.resume = not config_1.Dataset.no_resume and config_1.Dataset.eval_weights is None
 

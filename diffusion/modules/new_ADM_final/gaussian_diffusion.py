@@ -308,7 +308,7 @@ class GaussianDiffusion:
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def p_mean_variance(
-        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None
+        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None,Flag_unetsampling=False
     ):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
@@ -341,7 +341,8 @@ class GaussianDiffusion:
         # we come here again
         # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
         # scale timestep is not super usefull at alll
-        model_output,inout = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
+        model_kwargs['Flag_unetsampling']=Flag_unetsampling
+        model_output,inout,scene_face_feat,conditioning = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
         # we donot enter the forward function but we should return in here
         # this is where we have the error. 
         # 2,6,64,64 for the mean and teh varianceee
@@ -418,7 +419,9 @@ class GaussianDiffusion:
             "variance": model_variance,
             "log_variance": model_log_variance,
             "pred_xstart": pred_xstart,
-            "inout": inout
+            "inout": inout,
+            "scene_face_feat":scene_face_feat,
+            "conditioning":conditioning
         }
 
     def _predict_xstart_from_eps(self, x_t, t, eps):
@@ -600,7 +603,8 @@ class GaussianDiffusion:
             # print(model)
             # print(type(model))
             # we come here next step
-            model_output,inout = model(x=x_t, ts=self._scale_timesteps(t), **model_kwargs)
+            model_kwargs['Flag_unetsampling']=False
+            model_output,inout,_,_ = model(x=x_t, ts=self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
                 ModelVarType.LEARNED,
@@ -721,6 +725,10 @@ class GaussianDiffusion:
                  - 'sample': a random sample from the model.
                  - 'pred_xstart': a prediction of x_0.
         """
+        if t[0]!=999:
+            Flag_unetsampling = True
+        else:
+            Flag_unetsampling = False
         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
         out = self.p_mean_variance(
             model,
@@ -729,6 +737,8 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
+            Flag_unetsampling=Flag_unetsampling
+
         )
         noise = th.randn_like(x)
         nonzero_mask = (
@@ -739,7 +749,9 @@ class GaussianDiffusion:
                 cond_fn, out, x, t, model_kwargs=model_kwargs
             )
         sample = out["mean"] + nonzero_mask * th.exp(0.5 * out["log_variance"]) * noise
-        return {"sample": sample, "pred_xstart": out["pred_xstart"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
+   
+
 
     def p_sample_loop(
         self,
@@ -836,6 +848,11 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
+                if t[0] == 999:
+                    del model_kwargs
+                    model_kwargs= {'scene_face_feat':out['scene_face_feat'],
+                                   'conditioning':out['conditioning']
+                      }
     # DDIM SAMPLE
     def ddim_sample(
         self,
@@ -855,7 +872,10 @@ class GaussianDiffusion:
         Same usage as p_sample().
         """
         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
-
+        if t[0]!=999:
+            Flag_unetsampling = True
+        else:
+            Flag_unetsampling = False
         out = self.p_mean_variance(
             model,
             x,
@@ -863,6 +883,7 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
+            Flag_unetsampling=Flag_unetsampling
         )
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
@@ -895,7 +916,7 @@ class GaussianDiffusion:
         # sample = mean_pred + nonzero_mask * sigma * noise
         sample = mean_pred + sigma * noise
 
-        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
    
 
     def ddim_sample_loop(
@@ -959,10 +980,11 @@ class GaussianDiffusion:
         else:
             img = th.randn(*shape, device=device)
         # I am sampling in here not till 1000 but till specific number of sample steps 
-        img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
+        # img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
         # indices = list(range(self.sample_steps))[::-1]
         #modifcation to be done to make ddim work and start from last sample 
         indices =   list(reversed(th.linspace(-1, self.num_timesteps - 1, steps = self.sample_steps+1).int().tolist()))
+        # print(indices)
         if progress:
             # Lazy import so that we don't depend on tqdm.
             from tqdm.auto import tqdm
@@ -984,5 +1006,9 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-
+                if t[0] == 999:
+                    del model_kwargs
+                    model_kwargs= {'scene_face_feat':out['scene_face_feat'],
+                                   'conditioning':out['conditioning']
+                      }
     

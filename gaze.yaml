@@ -23,4 +23,4 @@ Gaze:
     adm_attention_module: false
     freeze_scene: false
     freeze_face: false
-    depth_flag: true 
+    depth_flag: false 

@@ -66,4 +66,12 @@ class SpatialDepthLateFusion_2(nn.Module):
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
         x = self.model(heat_map,time,conditioning)
-        return x,encoding_inout
+        return x,encoding_inout,scene_face_feat,conditioning
+    def forward_shorter (self,heat_map,time,scene_face_feat,conditioning):
+
+        # this part is to be used during the X-loss only 
+        encoding_inout = self.sequential(scene_face_feat)
+        encoding_inout = encoding_inout.view(-1, 49)
+        encoding_inout = self.fc_inout(encoding_inout)
+        x = self.model(heat_map,time,conditioning)
+        return x,encoding_inout,scene_face_feat,conditioning

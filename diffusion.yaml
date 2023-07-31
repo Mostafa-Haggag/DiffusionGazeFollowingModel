@@ -8,13 +8,13 @@ Dataset:
   eval_weights : ""
   lr: 2.5e-4
   epochs: 30
-  evaluate_every: 1
+  evaluate_every: 5
   save_every: 1
   print_every: 10
   no_resume: false
   output_dir: "output"
-  amp: O1
-  no_wandb: True
+  amp: ''
+  no_wandb: false
   no_save: false
   batch_size: 16
   input_size: 224
@@ -58,7 +58,7 @@ experiment_parameter:
   Debugging_maps: false
   eval_from_picture: false
   clip_denoised: false
-  lr_schedular: false
+  lr_schedular: true
   fix_snr : false
   offset_noise_strength: 0.1
   noise_changer: false
@@ -66,6 +66,6 @@ experiment_parameter:
   lr_anneal_steps: 0
 losses_parameters:
   kl_div_loss: false
-  x_loss: false
+  x_loss: True
   other_loss: false
   mse_loss_weight_type: "constant"

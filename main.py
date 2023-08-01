@@ -2,7 +2,7 @@ import multiprocessing
 import os
 import random
 from datetime import datetime
-from einops import reduce
+# from einops import reduce
 import functools
 from operator import is_not
 from functools import partial
@@ -26,8 +26,8 @@ from skimage.transform import resize
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import matplotlib.patches as patches
 from PIL import Image
-from einops import rearrange
-import math 
+# from einops import rearrange
+# import math 
 import wandb
 import io
 from omegaconf import OmegaConf
@@ -519,7 +519,7 @@ def train_one_epoch(
                 total_loss = 100000*s_rec_loss + 10000*output_loss
         else:
             if config.losses_parameters.x_loss:
-                total_loss = s_rec_loss + 0.01*Xent_loss
+                total_loss = s_rec_loss + 0.001*Xent_loss
             else:
                 total_loss = s_rec_loss
 

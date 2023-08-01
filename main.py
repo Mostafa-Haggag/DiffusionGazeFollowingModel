@@ -382,7 +382,7 @@ def main(config,config_1):
             if os.path.exists(backup_path):
                 os.remove(backup_path)
 
-            if config.save and ((ep + 1) % config_1.Dataset.save_every == 0 or (ep + 1) == config.epochs):
+            if config.save and ((ep + 1) % config_1.Dataset.save_every == 0 or (ep + 1) == config_1.Dataset.epochs):
                 save_path = os.path.join(config_1.Dataset.output_dir, f"ckpt_epoch_{ep + 1}.pth")
                 torch.save(checkpoint, save_path)
                 # I should also save the ema checkpoint this is missing

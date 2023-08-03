@@ -211,7 +211,7 @@ def main(config,config_1):
 
                 optimizer = get_optimizer(model
                                         , lr=config_1.Dataset.lr
-                                        , weight_decay=config.Dataset.weight_decay
+                                        , weight_decay=config_1.Dataset.weight_decay
                                     )
 
                 ema_params = [checkpoint.get("ema_params")[name] for name, _ in model.named_parameters()]

@@ -18,7 +18,7 @@ def get_loader(name: str, root_dir: str, random_flag=False,depth_on=False,x_loss
     elif name == "videoattentiontarget":
         labels = os.path.join(root_dir, "annotations/train" if is_train else "annotations/test")
         dataset = VideoAttentionTargetImages(
-            root_dir, labels, random_size=random_flag,input_size=input_size, output_size=output_size, is_test_set=not is_train
+            root_dir, labels, random_size=random_flag,depth_on=depth_on,input_size=input_size, output_size=output_size, is_test_set=not is_train
         )
         loader = DataLoader(
             dataset=dataset, batch_size=batch_size, shuffle=is_train, num_workers=num_workers, pin_memory=True

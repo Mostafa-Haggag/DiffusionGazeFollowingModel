@@ -21,11 +21,13 @@ from utils import get_head_mask, get_label_map
 
 
 class VideoAttentionTargetImages(Dataset):
-    def __init__(self, data_dir, labels_dir,random_size=False, input_size=224, output_size=64, is_test_set=False):
+    def __init__(self, data_dir, labels_dir,random_size=False,depth_on=False, input_size=224, output_size=64, is_test_set=False):
         self.data_dir = data_dir
         self.input_size = input_size
         self.output_size = output_size
         self.is_test_set = is_test_set
+        self.depth_on = depth_on
+
         self.head_bbox_overflow_coeff = 0.1  # Will increase/decrease the bbox of the head by this value (%)
         self.image_transform = transforms.Compose(
             [
@@ -35,6 +37,9 @@ class VideoAttentionTargetImages(Dataset):
             ]
         )
         self.random_size=random_size
+        self.depth_transform = transforms.Compose(
+            [ToColorMap(plt.get_cmap("magma")), transforms.Resize((input_size, input_size)), transforms.ToTensor()]
+        )
 
 
         self.X = []
@@ -200,17 +205,20 @@ class VideoAttentionTargetImages(Dataset):
 
         # Head channel image
         head = get_head_mask(face_x1, face_y1, face_x2, face_y2, width, height, resolution=self.input_size).unsqueeze(0)
-
-
+        # Load depth image
+        if self.depth_on:
+            depth = Image.open(os.path.join(self.data_dir, "depths", path))
+            depth = depth.convert("L")
+            # ... and depth
+            if self.depth_transform is not None:
+                depth = self.depth_transform(depth)
 
         # Apply transformation to image, face...
         if self.image_transform is not None:
             img = self.image_transform(img)
             face = self.image_transform(face)
 
-        # ... and depth
-        # if self.depth_transform is not None:
-        #     depth = self.depth_transform(depth)
+
 
         # Deconv output
         if gaze_inside:
@@ -233,19 +241,34 @@ class VideoAttentionTargetImages(Dataset):
                                             x_max*self.input_size/width,y_max*self.input_size/height]).numpy()
         information_tensor = information_tensor.astype(int)
         information_tensor = np.clip(information_tensor, 0, self.input_size - 1)
-        return (
-            img,
-            # depth,
-            face,
-            head,
-            gaze_heatmap,
-            torch.FloatTensor([eye_coords]),
-            torch.FloatTensor([gaze_coords]),
-            torch.IntTensor([gaze_inside]),
-            torch.IntTensor([width, height]),
-            path,
-            information_tensor
-        )
+        if self.depth_on:
+            return (
+                img,
+                depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([gaze_inside]),
+                torch.IntTensor([width, height]),
+                path,
+                information_tensor
+            )
+        else:
+            return (
+                img,
+                # depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([gaze_inside]),
+                torch.IntTensor([width, height]),
+                path,
+                information_tensor
+            )
 
     def __get_test_item__(self, index):
         (path, x_min, y_min, x_max, y_max, gaze_x, gaze_y) = self.X[index]
@@ -271,7 +294,13 @@ class VideoAttentionTargetImages(Dataset):
 
         head = get_head_mask(x_min, y_min, x_max, y_max, width, height, resolution=self.input_size).unsqueeze(0)
 
-
+        if self.depth_on:
+            # Load depth image
+            depth = Image.open(os.path.join(self.data_dir, "depths", path))
+            depth = depth.convert("L")
+        # ... and depth
+            if self.depth_transform is not None:
+                depth = self.depth_transform(depth)
 
         # Apply transformation to images...
         if self.image_transform is not None:
@@ -300,15 +329,29 @@ class VideoAttentionTargetImages(Dataset):
                                             x_max*self.input_size/width,y_max*self.input_size/height]).numpy()
         information_tensor = information_tensor.astype(int)
         information_tensor = np.clip(information_tensor, 0, self.input_size - 1)
-        return (
-            img,
-            # depth,
-            face,
-            head,
-            gaze_heatmap,
-            torch.FloatTensor([eye_coords]),
-            torch.FloatTensor([gaze_coords]),
-            torch.IntTensor([gaze_inside]),
-            torch.IntTensor([width, height]),
-            path,information_tensor
-        )
+        if self.depth_on:
+            return (
+                img,
+                depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([gaze_inside]),
+                torch.IntTensor([width, height]),
+                path,information_tensor
+            )
+        else:
+            return (
+                img,
+                # depth,
+                face,
+                head,
+                gaze_heatmap,
+                torch.FloatTensor([eye_coords]),
+                torch.FloatTensor([gaze_coords]),
+                torch.IntTensor([gaze_inside]),
+                torch.IntTensor([width, height]),
+                path,information_tensor
+            )

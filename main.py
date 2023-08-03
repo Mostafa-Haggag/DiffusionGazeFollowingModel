@@ -153,22 +153,40 @@ def main(config,config_1):
                                                 )
         if run_id is not None and config.wandb:
             print(f"Resuming wandb run with id {run_id}")
-            wandb.init(id=run_id,
-                           resume="must",
-                           save_code=True)
-            wandb.watch(model,log="gradients", log_freq=1000)
-            wandb.log(
-                        {
-                            "epoch": epoch,
-                            "val/auc": auc,
-                            "val/min_dist": min_dist,
-                            "val/avg_dist": avg_dist,
-                            "val/min_ang_err": min_ang_err,
-                            "val/avg_ang_err": avg_ang_err,
-                            "val/avg_ao": avg_ao,
-                            "val/images":wandb_gaze_heatmap_images,
-                        }
-            )
+            if config_1.Dataset.source_dataset=="videoattentiontarget":
+                wandb.init(id=run_id,
+                            resume="must",
+                            save_code=True)
+                wandb.watch(model,log="gradients", log_freq=1000)
+                wandb.log(
+                            {
+                                "epoch": epoch,
+                                "video/auc": auc,
+                                "video/min_dist": min_dist,
+                                "video/avg_dist": avg_dist,
+                                "video/min_ang_err": min_ang_err,
+                                "video/avg_ang_err": avg_ang_err,
+                                "video/avg_ao": avg_ao,
+                                "video/images":wandb_gaze_heatmap_images,
+                            }
+                )
+            else:
+                wandb.init(id=run_id,
+                            resume="must",
+                            save_code=True)
+                wandb.watch(model,log="gradients", log_freq=1000)
+                wandb.log(
+                            {
+                                "epoch": epoch,
+                                "val/auc": auc,
+                                "val/min_dist": min_dist,
+                                "val/avg_dist": avg_dist,
+                                "val/min_ang_err": min_ang_err,
+                                "val/avg_ang_err": avg_ang_err,
+                                "val/avg_ao": avg_ao,
+                                "val/images":wandb_gaze_heatmap_images,
+                            }
+                )
         # Print summary
         print("\nEval summary")
         print(f"AUC: {auc:.3f}")

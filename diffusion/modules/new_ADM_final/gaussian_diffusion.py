@@ -15,6 +15,7 @@ import torch as th
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood,softargmax2d,calculate_kl_divergence
 from einops import rearrange
+from utils import get_label_map
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
@@ -514,7 +515,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
+    def training_losses(self, model, x_start,x_point, t, model_kwargs=None, noise=None):
         """
         Compute training losses for a single timestep.
 
@@ -542,12 +543,30 @@ class GaussianDiffusion:
         # we didnot normalize in here . 
         # print("x-start min before",th.min(x_start.view(16,-1),1)[0])
         # print("x-start max before ",th.max(x_start.view(16,-1),1)[0])
-        x_start = self.normalize(x_start,self.normalization_value)
+        x_point = self.normalize(x_point,self.normalization_value)
         # print("x-start min after",th.min(x_start.view(16,-1),1)[0])
         # print("x-start max after",th.max(x_start.view(16,-1),1)[0])
-        x_t = self.q_sample(x_start, t, noise=noise)
-        x_t  = x_t / x_t.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x_t
+        x_t = self.q_sample(x_point, t, noise=noise)
+        x_t  = x_t / x_t.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x_t
+        x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
+        x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
+        ## generate heatmaps
+        sigma = 8
+        my_list = []
+        for gaze_x, gaze_y in x_t:
+            gaze_heatmap_i = th.zeros(64, 64)
+
+            gaze_heatmap = get_label_map(
+            gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+            )
+            my_list.append(gaze_heatmap)
+            # print(gaze_heatmap.shape)
+        
+        x_t_final=th.stack(my_list,0)
+        x_t_final=x_t_final.unsqueeze(1)
+        x_t_final=x_t_final.to(x_start.device, non_blocking=True)
+        ##
         # take care of normalization.
         mse_loss_weight = None
         alpha = _extract_into_tensor(self.sqrt_alphas_cumprod, t, t.shape)
@@ -592,7 +611,7 @@ class GaussianDiffusion:
             terms["loss"] = self._vb_terms_bpd(
                 model=model,
                 x_start=x_start,
-                x_t=x_t,
+                x_t=x_t_final,
                 t=t,
                 clip_denoised=False,
                 model_kwargs=model_kwargs,
@@ -604,14 +623,14 @@ class GaussianDiffusion:
             # print(type(model))
             # we come here next step
             model_kwargs['Flag_unetsampling']=False
-            model_output,inout,_,_ = model(x=x_t, ts=self._scale_timesteps(t), **model_kwargs)
+            model_output,inout,_,_ = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
                 ModelVarType.LEARNED,
                 ModelVarType.LEARNED_RANGE,
             ]:
-                B, C = x_t.shape[:2]
-                assert model_output.shape == (B, C * 2, *x_t.shape[2:])
+                B, C = x_t_final.shape[:2]
+                assert model_output.shape == (B, C * 2, *x_t_final.shape[2:])
                 model_output, model_var_values = th.split(model_output, C, dim=1)
                 # Learn the variance using the variational bound, but don't let
                 # it affect our mean prediction.
@@ -630,7 +649,7 @@ class GaussianDiffusion:
                 terms["vb"] = self._vb_terms_bpd(
                     model=lambda *args, r=frozen_out: r,
                     x_start=x_start,
-                    x_t=x_t,
+                    x_t=x_t_final,
                     t=t,
                     clip_denoised=False,
                 )["output"]
@@ -648,7 +667,7 @@ class GaussianDiffusion:
 
             target = {
                 ModelMeanType.PREVIOUS_X: self.q_posterior_mean_variance(
-                    x_start=x_start, x_t=x_t, t=t
+                    x_start=x_start, x_t=x_t_final, t=t
                 )[0],
                 ModelMeanType.START_X: x_start,
                 ModelMeanType.EPSILON: noise,
@@ -665,6 +684,8 @@ class GaussianDiffusion:
             terms["location"] = pred_location
             terms["mse"] = mse_loss_weight * mean_flat((target - model_output) ** 2)
             terms["mse_raw"] = mean_flat((target - model_output) ** 2)
+            # terms["meow"] = mean_flat((target - picture) ** 2)
+
             # print("x-start min before",th.min(copy_model.view(16,-1),1)[0])
             # print("x-start max before ",th.max(copy_model.view(16,-1),1)[0])
             terms["output"] = self.unnormalize(copy_model,self.normalization_value)

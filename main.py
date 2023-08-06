@@ -509,6 +509,7 @@ def train_one_epoch(
                         diffusion.training_losses,
                         model,
                         s_gaze_heatmaps,
+                        gaze_points.squeeze(1),
                         t,
                         model_kwargs=micro_cond,
                     )

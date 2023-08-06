@@ -9,7 +9,7 @@ class Decoder(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
 
-        self.deconv1 = nn.ConvTranspose2d(512, 256, kernel_size=3, stride=2)
+        self.deconv1 = nn.ConvTranspose2d(2048, 256, kernel_size=3, stride=2)
         self.bn1 = nn.BatchNorm2d(256)
         self.deconv2 = nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2)
         self.bn2 = nn.BatchNorm2d(128)

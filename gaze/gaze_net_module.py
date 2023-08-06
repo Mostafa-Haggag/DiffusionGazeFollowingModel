@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from gaze.modules import ResNet,Encoder
+from gaze.modules import ResNet,Encoder,Decoder
 class gaze_net_module(nn.Module):
         def __init__(
         self,
@@ -26,6 +26,7 @@ class gaze_net_module(nn.Module):
                 self.scene_encoder = Encoder()
                 # Encoding for depth saliency
                 self.depth_encoder = Encoder()
+            self.decoder = Decoder()
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
             self.attn = nn.Linear(1808, 1 * 7 * 7)
             self.attention_module = attention_module

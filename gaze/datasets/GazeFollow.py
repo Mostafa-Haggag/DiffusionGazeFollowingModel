@@ -264,7 +264,7 @@ class GazeFollow(Dataset):
         if self.random_size:
                 sigma = random.randint(7, 10)
         else: 
-            sigma= 3
+            sigma= 8
         gaze_heatmap = get_label_map(
             gaze_heatmap, [gaze_x * self.output_size, gaze_y * self.output_size], sigma, pdf="Gaussian"
         )
@@ -370,7 +370,7 @@ class GazeFollow(Dataset):
             if self.random_size:
                 sigma = random.randint(7, 10)
             else: 
-                sigma= 3
+                sigma= 8
             gaze_heatmap = get_label_map(
                 gaze_heatmap, [gaze_x * self.output_size, gaze_y * self.output_size], sigma, pdf="Gaussian"
             )

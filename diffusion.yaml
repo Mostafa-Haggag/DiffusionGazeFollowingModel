@@ -4,7 +4,7 @@ Dataset:
   num_workers: 12
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
-  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/default/ckpt_epoch_1.pth"
+  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/changing_in_configuration_of_network/ckpt_epoch_5.pth"
   eval_weights : 
   lr: 2.5e-4
   epochs: 30
@@ -13,7 +13,7 @@ Dataset:
   print_every: 10
   no_resume: false
   output_dir: "output"
-  amp: ''
+  amp: 'O1'
   no_wandb: false
   no_save: false
   batch_size: 16
@@ -51,14 +51,14 @@ Diffusion:
   adm_learn_sigma: false
   adm_attention_module: false
 experiment_parameter:
-  diff_normalization: 0.1
+  diff_normalization: 2
   norm_std_flag: true
-  random_flag: true
+  random_flag: false
   is_subsample_test_set: false
   Debugging_maps: false
   eval_from_picture: false
   clip_denoised: false
-  lr_schedular: true
+  lr_schedular: false
   fix_snr : false
   offset_noise_strength: 0.1
   noise_changer: false
@@ -66,6 +66,6 @@ experiment_parameter:
   lr_anneal_steps: 0
 losses_parameters:
   kl_div_loss: false
-  x_loss: True
+  x_loss: false
   other_loss: false
   mse_loss_weight_type: "constant"

@@ -50,13 +50,15 @@ class gaze_net_module(nn.Module):
                     images = torch.cat((images, masks), dim=1)
                     if not self.attention_module:
                         scene_feat = self.scene_backbone(images)
-                        scene_feat_reduced   = scene_feat.view(-1, 49,self.unet_context_vector)
+                        scene_feat_reduced   = scene_feat.permute(0,2,3,1).view(-1, 49,self.unet_context_vector)
                         face_feat = self.face_backbone(face)
                         # important stuff to add in here 
                         scene_face_feat = torch.cat((scene_feat, face_feat), 1)
+
                         ## end of important stuff 
-                        face_feat_reduced = face_feat.view(-1, 49,self.unet_context_vector)
+                        face_feat_reduced = face_feat.permute(0,2,3,1).view(-1, 49,self.unet_context_vector)
                         conditioning = torch.concat([scene_feat_reduced,face_feat_reduced],1)
+                        picture = self.decoder(torch.concat([scene_feat,face_feat],1)) 
                     else:
                         scene_feat = self.scene_backbone(images) # output is (batchsize ,1024,7,7)
                         face_feat = self.face_backbone(face)# output is (batchsize ,1024,7,7)
@@ -74,4 +76,4 @@ class gaze_net_module(nn.Module):
                         attn_applied_scene_feat = torch.mul(attn_weights, scene_feat)# 8,1024,7,7
                         scene_face_feat = torch.cat((attn_applied_scene_feat, face_feat), 1)
                         conditioning = torch.concat([attn_applied_scene_feat.view(-1, 49,self.unet_context_vector),face_feat.view(-1, 49,self.unet_context_vector)],1)
-            return scene_face_feat,conditioning
+            return scene_face_feat,conditioning,picture

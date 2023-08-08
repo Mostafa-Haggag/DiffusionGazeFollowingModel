@@ -343,7 +343,7 @@ class GaussianDiffusion:
         # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
         # scale timestep is not super usefull at alll
         model_kwargs['Flag_unetsampling']=Flag_unetsampling
-        model_output,inout,scene_face_feat,conditioning = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
+        model_output,inout,scene_face_feat,conditioning,picture = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
         # we donot enter the forward function but we should return in here
         # this is where we have the error. 
         # 2,6,64,64 for the mean and teh varianceee
@@ -422,7 +422,8 @@ class GaussianDiffusion:
             "pred_xstart": pred_xstart,
             "inout": inout,
             "scene_face_feat":scene_face_feat,
-            "conditioning":conditioning
+            "conditioning":conditioning,
+            "picture":picture
         }
 
     def _predict_xstart_from_eps(self, x_t, t, eps):
@@ -534,10 +535,10 @@ class GaussianDiffusion:
         
         if noise is None:
             if self.noise_changer:
-                offset_noise = th.randn(x_start.shape[:2], device = x_start.get_device())
-                noise = th.randn_like(x_start)+ model_kwargs['noise_strength']*rearrange(offset_noise, 'b c -> b c 1 1')# calculate the noise like you always do ! 
+                offset_noise = th.randn(x_point.shape[:2], device = x_point.get_device())
+                noise = th.randn_like(x_point)+ model_kwargs['noise_strength']*rearrange(offset_noise, 'b c -> b c 1 1')# calculate the noise like you always do ! 
             else:
-                noise = th.randn_like(x_start)
+                noise = th.randn_like(x_point)
         del model_kwargs['noise_strength']
         # the forward process after adding the noise .
         # we didnot normalize in here . 
@@ -623,7 +624,7 @@ class GaussianDiffusion:
             # print(type(model))
             # we come here next step
             model_kwargs['Flag_unetsampling']=False
-            model_output,inout,_,_ = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
+            model_output,inout,_,_,picture = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
                 ModelVarType.LEARNED,
@@ -671,7 +672,7 @@ class GaussianDiffusion:
                 )[0],
                 ModelMeanType.START_X: x_start,
                 ModelMeanType.EPSILON: noise,
-                ModelMeanType.VELOCITY: self._predict_v(x_start, t, noise),
+                ModelMeanType.VELOCITY: self._predict_v(x_point, t, noise),
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
             # make sure that network is within expected range
@@ -684,7 +685,7 @@ class GaussianDiffusion:
             terms["location"] = pred_location
             terms["mse"] = mse_loss_weight * mean_flat((target - model_output) ** 2)
             terms["mse_raw"] = mean_flat((target - model_output) ** 2)
-            # terms["meow"] = mean_flat((target - picture) ** 2)
+            terms["meow"] = mean_flat((target - picture) ** 2)
 
             # print("x-start min before",th.min(copy_model.view(16,-1),1)[0])
             # print("x-start max before ",th.max(copy_model.view(16,-1),1)[0])
@@ -770,7 +771,7 @@ class GaussianDiffusion:
                 cond_fn, out, x, t, model_kwargs=model_kwargs
             )
         sample = out["mean"] + nonzero_mask * th.exp(0.5 * out["log_variance"]) * noise
-        return {"sample": sample, "pred_xstart": out["pred_xstart"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"],"picture":out["picture"]}
    
 
 
@@ -872,7 +873,8 @@ class GaussianDiffusion:
                 if t[0] == 999:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
-                                   'conditioning':out['conditioning']
+                                   'conditioning':out['conditioning'],
+                                   'picture':out['picture']
                       }
     # DDIM SAMPLE
     def ddim_sample(
@@ -892,7 +894,10 @@ class GaussianDiffusion:
 
         Same usage as p_sample().
         """
-        x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
+        if t[0] ==999:
+            _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
+        else:
+            x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
         if t[0]!=999:
             Flag_unetsampling = True
         else:
@@ -909,7 +914,7 @@ class GaussianDiffusion:
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
         if t[0]<0:
-            return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
+            return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"],"picture": out["picture"]}
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
         eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
@@ -937,7 +942,7 @@ class GaussianDiffusion:
         # sample = mean_pred + nonzero_mask * sigma * noise
         sample = mean_pred + sigma * noise
 
-        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"],"picture":out["picture"]}
    
 
     def ddim_sample_loop(
@@ -972,7 +977,7 @@ class GaussianDiffusion:
             eta=eta,
         ):
             final = sample
-        return self.unnormalize(final["sample"],self.normalization_value),final["inout"]
+        return self.unnormalize(final["sample"],self.normalization_value),final["inout"],final["picture"]
 
     def ddim_sample_loop_progressive(
         self,
@@ -1030,6 +1035,8 @@ class GaussianDiffusion:
                 if t[0] == 999:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
-                                   'conditioning':out['conditioning']
+                                   'conditioning':out['conditioning'],
+                                   'picture':out['picture'],
+
                       }
     

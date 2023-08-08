@@ -151,6 +151,15 @@ def main(config,config_1):
                                                 target_test_loader,
                                                 sample_fn
                                                 )
+        auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images,wandb_gaze_heatmap_images_2,\
+                auc_meter_1,min_dist_meter_1,avg_dist_meter_1,min_ang_error_meter_1,avg_ang_error_meter_1= \
+                                        evaluate(config_1, 
+                                                model,
+                                                epoch,
+                                                device,
+                                                target_test_loader,
+                                                sample_fn
+                                                ) 
         if run_id is not None and config.wandb:
             print(f"Resuming wandb run with id {run_id}")
             if config_1.Dataset.source_dataset=="videoattentiontarget":
@@ -176,17 +185,23 @@ def main(config,config_1):
                             save_code=True)
                 wandb.watch(model,log="gradients", log_freq=1000)
                 wandb.log(
-                            {
-                                "epoch": epoch,
-                                "val/auc": auc,
-                                "val/min_dist": min_dist,
-                                "val/avg_dist": avg_dist,
-                                "val/min_ang_err": min_ang_err,
-                                "val/avg_ang_err": avg_ang_err,
-                                "val/avg_ao": avg_ao,
-                                "val/images":wandb_gaze_heatmap_images,
-                            }
-                )
+                    {
+                            "epoch": ep + 1,
+                            "val/auc": auc,
+                            "val/min_dist": min_dist,
+                            "val/avg_dist": avg_dist,
+                            "val/min_ang_err": min_ang_err,
+                            "val/avg_ang_err": avg_ang_err,
+                            "val/avg_ao": avg_ao,
+                            "val/auc_1": auc_meter_1,
+                            "val/min_dist_1": min_dist_meter_1,
+                            "val/avg_dist_1": avg_dist_meter_1,
+                            "val/min_ang_err_1": min_ang_error_meter_1,
+                            "val/avg_ang_err_1": avg_ang_error_meter_1,
+                            "val/images":wandb_gaze_heatmap_images,
+                            "val/images_2":wandb_gaze_heatmap_images_2
+                    }
+                    )
         # Print summary
         print("\nEval summary")
         print(f"AUC: {auc:.3f}")
@@ -410,15 +425,15 @@ def main(config,config_1):
             if (ep + 1) % config_1.Dataset.evaluate_every == 0 or (ep + 1) == config_1.Dataset.epochs:
                 print("Starting evaluation")
                 
-                auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \
+                auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images,wandb_gaze_heatmap_images_2,\
+                auc_meter_1,min_dist_meter_1,avg_dist_meter_1,min_ang_error_meter_1,avg_ang_error_meter_1= \
                                         evaluate(config_1, 
                                                 model,
                                                 ep+1,
                                                 device,
                                                 target_test_loader,
                                                 sample_fn
-                                                )
-
+                                                ) 
                 # target test loader is passed 
                 if config.wandb:
                     wandb.log(
@@ -429,8 +444,14 @@ def main(config,config_1):
                             "val/avg_dist": avg_dist,
                             "val/min_ang_err": min_ang_err,
                             "val/avg_ang_err": avg_ang_err,
-                            "val/avg_ao":avg_ao,
+                            "val/avg_ao": avg_ao,
+                            "val/auc_1": auc_meter_1,
+                            "val/min_dist_1": min_dist_meter_1,
+                            "val/avg_dist_1": avg_dist_meter_1,
+                            "val/min_ang_err_1": min_ang_error_meter_1,
+                            "val/avg_ang_err_1": avg_ang_error_meter_1,
                             "val/images":wandb_gaze_heatmap_images,
+                            "val/images_2":wandb_gaze_heatmap_images_2
                     }
                     )
 def train_one_epoch(
@@ -527,6 +548,7 @@ def train_one_epoch(
                                                     )
         s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
         s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
+        f_rec_loss = losses["meow"].mean()
         if config.losses_parameters.other_loss:
             output_loss = mse_loss(losses["location"], torch.flip(gaze_points.squeeze(1), [1]))
             if config.losses_parameters.kl_div_loss:
@@ -540,7 +562,7 @@ def train_one_epoch(
             if config.losses_parameters.x_loss:
                 total_loss = s_rec_loss + 0.01*Xent_loss
             else:
-                total_loss = s_rec_loss
+                total_loss = s_rec_loss +  f_rec_loss
 
         if config.Dataset.amp:
             with amp.scale_loss(total_loss, optimizer) as scaled_loss:
@@ -599,6 +621,7 @@ def train_one_epoch(
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
+                        "train/convloss": f_rec_loss.item(),
                         "train/outputloss": s_rec_loss.item(),
                         "train/loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
@@ -711,6 +734,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
     new_gazer_mask = []
     new_gaze_heatmap_pred = []
     new_coordinate_test = []
+    #
+    previous_sorted_list_2 = []
+    auc_meter_1 = AverageMeter()
+    min_dist_meter_1 = AverageMeter()
+    avg_dist_meter_1 = AverageMeter()
+    min_ang_error_meter_1 = AverageMeter()
+    avg_ang_error_meter_1 = AverageMeter()
     # original_indices = []
     # loader has size of 150
     with torch.no_grad():# you have more than loader
@@ -763,7 +793,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                       'face':faces,
                       'masks':masks
                       }
-            gaze_heatmap_pred,inout = sample_fn(
+            gaze_heatmap_pred,inout,result_decoder = sample_fn(
             model,
             (images_copy.shape[0], 1, 64, 64),
             model_kwargs=micro_cond,
@@ -776,6 +806,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
 
             # slicing to remove the uneeded stuff from here. 
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
+            result_decoder = result_decoder.squeeze(1).cpu()#
 
             # Sets the number of jobs according to batch size and cpu counts. In any case, no less than 1 and more than
             # 8 jobs are allocated.
@@ -783,6 +814,12 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             metrics = Parallel(n_jobs=n_jobs)(
                 delayed(evaluate_one_item)(
                     gaze_heatmap_pred[b_i], eye_coords[b_i], gaze_coords[b_i], img_size[b_i], output_size
+                )
+                for b_i in range(len(gaze_coords))
+            )
+            metrics_2 = Parallel(n_jobs=n_jobs)(
+                delayed(evaluate_one_item)(
+                    result_decoder[b_i], eye_coords[b_i], gaze_coords[b_i], img_size[b_i], output_size
                 )
                 for b_i in range(len(gaze_coords))
             )
@@ -802,6 +839,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             sorted_tuples = sorted(enumerate(metrics), key=lambda x: x[1][0])# I sort the metrics
             previous_sorted_list.extend([x[1] for x in sorted_tuples[:gaze_to_save]]) # extract the values auc of the worst 4
             original_indices=[x[0] for x in sorted_tuples[:gaze_to_save]]# index auc of worst 4
+            previous_sorted_list_2.extend([metrics_2[i] for i in original_indices])
+
             #########################################################################
             # adding the indices
 
@@ -817,21 +856,29 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                 new_gazer_mask = gazer_mask[original_indices].clone()
                 new_gaze_heatmap_pred = gaze_heatmap_pred[original_indices].clone()
                 new_coordinate_test = coordinates_test[original_indices].clone()
+                new_result_decoder = result_decoder[original_indices].clone()
+
             else:
                 sorted_tuples_2 = sorted(enumerate(previous_sorted_list), key=lambda x: x[1][0])
                 new_sorted_list = [x[1] for x in sorted_tuples_2[:gaze_to_save]]
                 final_indices = [x[0] for x in sorted_tuples_2[:gaze_to_save]] # index of the current batch so we can choose witch to remove
+                new_sorted_list_2 = [previous_sorted_list_2[i] for i in final_indices]
                 previous_sorted_list = new_sorted_list
+                previous_sorted_list_2 = new_sorted_list_2
+
                 ################################
                 new_image = torch.concat([new_image,images[original_indices].clone()],0)
                 new_gazer_mask = torch.concat([new_gazer_mask,gazer_mask[original_indices].clone()],0)
                 new_gaze_heatmap_pred = torch.concat([new_gaze_heatmap_pred,gaze_heatmap_pred[original_indices].clone()],0)
                 new_coordinate_test = torch.concat([new_coordinate_test,coordinates_test[original_indices].clone()],0)
+                new_result_decoder = torch.concat([new_result_decoder,result_decoder[original_indices].clone()],0)
                 ################################
                 new_image = new_image[final_indices]
                 new_gazer_mask = new_gazer_mask[final_indices]
                 new_gaze_heatmap_pred = new_gaze_heatmap_pred[final_indices]
                 new_coordinate_test = new_coordinate_test[final_indices]
+                new_result_decoder = new_result_decoder[final_indices]
+
             # original_indices = original_indices[:gaze_to_save]
             for metric in metrics:
                 if metric is None:
@@ -844,7 +891,17 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                 min_ang_error_meter.update(min_ang_err)
                 avg_dist_meter.update(avg_dist)
                 avg_ang_error_meter.update(avg_ang_err)
+            for metric in metrics_2:
+                if metric is None:
+                    continue
 
+                auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err = metric
+
+                auc_meter_1.update(auc_score)
+                min_dist_meter_1.update(min_dist)
+                min_ang_error_meter_1.update(min_ang_err)
+                avg_dist_meter_1.update(avg_dist)
+                avg_ang_error_meter_1.update(avg_ang_err)
             if (batch + 1) % print_every == 0 or (batch + 1) == len(loader):
                 print(
                     f"Evaluation - BATCH {(batch + 1):04d}/{len(loader)} "
@@ -864,6 +921,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                                                     new_coordinate_test,
                                                     epoch,config.experiment_parameter.Debugging_maps,sorted_list=previous_sorted_list
                                                     )
+                    wandb_gaze_heatmap_images_2= validate_images(
+                                                    new_image,
+                                                    new_gazer_mask,
+                                                    new_result_decoder,
+                                                    new_coordinate_test,
+                                                    epoch,config.experiment_parameter.Debugging_maps,sorted_list=previous_sorted_list_2
+                                                    )
     return (
         auc_meter.avg,
         min_dist_meter.avg,
@@ -871,7 +935,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
         min_ang_error_meter.avg,
         avg_ang_error_meter.avg,
         ao_meter.avg,
-        wandb_gaze_heatmap_images
+        wandb_gaze_heatmap_images,
+        wandb_gaze_heatmap_images_2,
+        auc_meter_1.avg,
+        min_dist_meter_1.avg,
+        avg_dist_meter_1.avg,
+        min_ang_error_meter_1.avg,
+        avg_ang_error_meter_1.avg,
     )
 
 

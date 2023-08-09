@@ -8,6 +8,7 @@ Docstrings have been added, as well as DDIM sampling and a new collection of bet
 import enum
 import math
 import copy
+import random
 
 import numpy as np
 import torch as th
@@ -553,7 +554,8 @@ class GaussianDiffusion:
         x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
         ## generate heatmaps
-        sigma = 8
+        sigma = random.randint(7, 10)
+
         my_list = []
         for gaze_x, gaze_y in x_t:
             gaze_heatmap_i = th.zeros(64, 64)

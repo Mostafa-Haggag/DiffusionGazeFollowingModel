@@ -24,8 +24,9 @@ Dataset:
   device: "cuda"
   channels_last: false
 Diffusion:
+  schedule_type: 'cosine'
   unet_inout_channels: 1
-  unet_inplanes: 8
+  unet_inplanes: 4
   unet_residual: 1
   list_unet_inplanes_multipliers: 
       - 1
@@ -59,7 +60,7 @@ experiment_parameter:
   eval_from_picture: false
   clip_denoised: false
   lr_schedular: false
-  fix_snr : false
+  fix_snr : true
   offset_noise_strength: 0.1
   noise_changer: false
   ema_on: false

@@ -88,7 +88,7 @@ def main(config,config_1):
                 steps=config_1.Diffusion.train_time_steps,
                 sample_steps=config_1.Diffusion.sample_time_steps,
                 learn_sigma=config_1.Diffusion.adm_learn_sigma,
-                noise_schedule='linear',
+                noise_schedule=config_1.Diffusion.schedule_type,
                 use_kl=config_1.Diffusion.adm_use_kl,
                 predict_xstart=config_1.Diffusion.adm_predict_xstart,
                 rescale_timesteps=config_1.Diffusion.adm_rescale_timesteps,

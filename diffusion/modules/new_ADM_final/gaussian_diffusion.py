@@ -418,6 +418,7 @@ class GaussianDiffusion:
         )
         return {
             "mean": model_mean,
+            "model_output":model_output,
             "variance": model_variance,
             "log_variance": model_log_variance,
             "pred_xstart": pred_xstart,
@@ -446,7 +447,12 @@ class GaussianDiffusion:
             )
             * x_t
         )
-
+    def _predict_eps_for_v(self, model_output, t, sample):
+        # equation 9 being reformulate to extract the needed inforatmion 
+        return (
+            _extract_into_tensor(self.sqrt_alphas_cumprod, t, model_output.shape) * model_output
+            +_extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t, model_output.shape) * sample
+        )
     def _predict_eps_from_xstart(self, x_t, t, pred_xstart):
         # equation 9 being reformulate to extract the needed inforatmion 
         return (
@@ -919,7 +925,10 @@ class GaussianDiffusion:
             return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"],"picture": out["picture"]}
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
-        eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
+        if self.model_mean_type in [ModelMeanType.VELOCITY]:
+            eps= self._predict_eps_for_v(out['model_output'], t, x)
+        else:
+            eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
 
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
         alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x.shape)

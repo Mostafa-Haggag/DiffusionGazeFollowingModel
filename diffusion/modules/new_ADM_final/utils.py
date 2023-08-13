@@ -7,7 +7,7 @@ def Normalize(in_channels):
     '''
     Just normal group normal with 32 groups set as default
     '''
-    return torch.nn.GroupNorm(num_groups=8, num_channels=in_channels, eps=1e-6, affine=True)
+    return torch.nn.GroupNorm(num_groups=4, num_channels=in_channels, eps=1e-6, affine=True)
 def zero_module(module):
     """
     Zero out the parameters of a module and return it.

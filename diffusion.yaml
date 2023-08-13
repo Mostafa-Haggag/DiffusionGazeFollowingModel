@@ -26,7 +26,7 @@ Dataset:
 Diffusion:
   schedule_type: 'cosine'
   unet_inout_channels: 1
-  unet_inplanes: 4
+  unet_inplanes: 8
   unet_residual: 1
   list_unet_inplanes_multipliers: 
       - 1
@@ -44,8 +44,8 @@ Diffusion:
   sample_time_steps: 250
   unet_dropout: 0.0
   adm: false
-  adm_predict_xstart: true
-  adm_predict_v: false
+  adm_predict_xstart: false
+  adm_predict_v: true
   adm_use_kl: false  
   adm_rescale_timesteps: false
   adm_rescale_learned_sigmas: false

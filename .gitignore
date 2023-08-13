@@ -341,6 +341,6 @@ video_dataset
 models/modules/ignored_modules
 ckpt_epoch_30.pth
 understand_code.py
-run_model.sh
-gaze_cluster.yaml
-gaze_cluster.yaml
+*.yaml
+slurm*
+*.sh

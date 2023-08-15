@@ -26,7 +26,6 @@ class gaze_net_module(nn.Module):
                 self.scene_encoder = Encoder()
                 # Encoding for depth saliency
                 self.depth_encoder = Encoder()
-            self.decoder = Decoder()
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
             self.attn = nn.Linear(1808, 1 * 7 * 7)
             self.attention_module = attention_module
@@ -58,7 +57,6 @@ class gaze_net_module(nn.Module):
                         ## end of important stuff 
                         face_feat_reduced = face_feat.permute(0,2,3,1).view(-1, 49,self.unet_context_vector)
                         conditioning = torch.concat([scene_feat_reduced,face_feat_reduced],1)
-                        picture = self.decoder(torch.concat([scene_feat,face_feat],1)) 
                     else:
                         scene_feat = self.scene_backbone(images) # output is (batchsize ,1024,7,7)
                         face_feat = self.face_backbone(face)# output is (batchsize ,1024,7,7)
@@ -76,4 +74,4 @@ class gaze_net_module(nn.Module):
                         attn_applied_scene_feat = torch.mul(attn_weights, scene_feat)# 8,1024,7,7
                         scene_face_feat = torch.cat((attn_applied_scene_feat, face_feat), 1)
                         conditioning = torch.concat([attn_applied_scene_feat.view(-1, 49,self.unet_context_vector),face_feat.view(-1, 49,self.unet_context_vector)],1)
-            return scene_face_feat,conditioning,picture
+            return scene_face_feat,conditioning

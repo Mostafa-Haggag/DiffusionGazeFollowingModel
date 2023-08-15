@@ -344,7 +344,7 @@ class GaussianDiffusion:
         # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
         # scale timestep is not super usefull at alll
         model_kwargs['Flag_unetsampling']=Flag_unetsampling
-        model_output,inout,scene_face_feat,conditioning,picture = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
+        model_output,inout,scene_face_feat,conditioning = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
         # we donot enter the forward function but we should return in here
         # this is where we have the error. 
         # 2,6,64,64 for the mean and teh varianceee
@@ -406,7 +406,7 @@ class GaussianDiffusion:
                 pred_xstart = process_xstart(
                 self._predict_xstart_from_v(x_t=x, t=t, v=model_output)
                 )
-            # do you understand what is xstarttt? it is the picture itself 
+            # do you understand what is xstarttt? it is the  itself 
             model_mean, _, _ = self.q_posterior_mean_variance(
                 x_start=pred_xstart, x_t=x, t=t
             )# you output the model mean in here !!!!
@@ -425,7 +425,6 @@ class GaussianDiffusion:
             "inout": inout,
             "scene_face_feat":scene_face_feat,
             "conditioning":conditioning,
-            "picture":picture
         }
 
     def _predict_xstart_from_eps(self, x_t, t, eps):
@@ -632,7 +631,7 @@ class GaussianDiffusion:
             # print(type(model))
             # we come here next step
             model_kwargs['Flag_unetsampling']=False
-            model_output,inout,_,_,picture = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
+            model_output,inout,_,_ = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
                 ModelVarType.LEARNED,
@@ -693,7 +692,6 @@ class GaussianDiffusion:
             terms["location"] = pred_location
             terms["mse"] = mse_loss_weight * mean_flat((target - model_output) ** 2)
             terms["mse_raw"] = mean_flat((target - model_output) ** 2)
-            terms["meow"] = mean_flat((target - picture) ** 2)
 
             # print("x-start min before",th.min(copy_model.view(16,-1),1)[0])
             # print("x-start max before ",th.max(copy_model.view(16,-1),1)[0])
@@ -779,7 +777,7 @@ class GaussianDiffusion:
                 cond_fn, out, x, t, model_kwargs=model_kwargs
             )
         sample = out["mean"] + nonzero_mask * th.exp(0.5 * out["log_variance"]) * noise
-        return {"sample": sample, "pred_xstart": out["pred_xstart"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"],"picture":out["picture"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"],}
    
 
 
@@ -882,7 +880,6 @@ class GaussianDiffusion:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning'],
-                                   'picture':out['picture']
                       }
     # DDIM SAMPLE
     def ddim_sample(
@@ -940,7 +937,7 @@ class GaussianDiffusion:
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
         if t[0]<0:
-            return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"],"picture": out["picture"]}
+            return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
         if self.model_mean_type in [ModelMeanType.VELOCITY]:
@@ -971,7 +968,7 @@ class GaussianDiffusion:
         # sample = mean_pred + nonzero_mask * sigma * noise
         sample = mean_pred + sigma * noise
 
-        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"],"picture":out["picture"]}
+        return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
    
 
     def ddim_sample_loop(
@@ -1006,7 +1003,7 @@ class GaussianDiffusion:
             eta=eta,
         ):
             final = sample
-        return self.unnormalize(final["sample"],self.normalization_value),final["inout"],final["picture"]
+        return self.unnormalize(final["sample"],self.normalization_value),final["inout"]
 
     def ddim_sample_loop_progressive(
         self,
@@ -1065,7 +1062,6 @@ class GaussianDiffusion:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning'],
-                                   'picture':out['picture'],
 
                       }
     

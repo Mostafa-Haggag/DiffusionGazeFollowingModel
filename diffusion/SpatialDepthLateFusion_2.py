@@ -57,21 +57,21 @@ class SpatialDepthLateFusion_2(nn.Module):
         # Both the condiitoning and scene face feat should be changed according 
         # To what gaze model you are using
         if self.depth_flag:
-            scene_face_feat,conditioning,picture=self.gaze_model(images, face,masks,depth)
+            scene_face_feat,conditioning=self.gaze_model(images, face,masks,depth)
         else:
-            scene_face_feat,conditioning,picture=self.gaze_model(images, face,masks)
+            scene_face_feat,conditioning=self.gaze_model(images, face,masks)
 
         # this part is to be used during the X-loss only 
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
         x = self.model(heat_map,time,conditioning)
-        return x,encoding_inout,scene_face_feat,conditioning,picture
-    def forward_shorter (self,heat_map,time,scene_face_feat,conditioning,picture):
+        return x,encoding_inout,scene_face_feat,conditioning
+    def forward_shorter (self,heat_map,time,scene_face_feat,conditioning):
 
         # this part is to be used during the X-loss only 
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
         x = self.model(heat_map,time,conditioning)
-        return x,encoding_inout,scene_face_feat,conditioning,picture
+        return x,encoding_inout,scene_face_feat,conditioning

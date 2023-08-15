@@ -548,7 +548,6 @@ def train_one_epoch(
                                                     )
         s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
         s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
-        f_rec_loss = losses["meow"].mean()
         if config.losses_parameters.other_loss:
             output_loss = mse_loss(losses["location"], torch.flip(gaze_points.squeeze(1), [1]))
             if config.losses_parameters.kl_div_loss:
@@ -562,7 +561,7 @@ def train_one_epoch(
             if config.losses_parameters.x_loss:
                 total_loss = s_rec_loss + 0.01*Xent_loss
             else:
-                total_loss = s_rec_loss +  0.01*f_rec_loss
+                total_loss = s_rec_loss 
 
         if config.Dataset.amp:
             with amp.scale_loss(total_loss, optimizer) as scaled_loss:
@@ -621,7 +620,7 @@ def train_one_epoch(
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
-                        "train/convloss": f_rec_loss.item(),
+                        # "train/convloss": f_rec_loss.item(),
                         "train/outputloss": s_rec_loss.item(),
                         "train/loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],

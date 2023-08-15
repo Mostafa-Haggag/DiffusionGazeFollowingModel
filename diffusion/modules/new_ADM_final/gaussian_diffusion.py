@@ -904,6 +904,7 @@ class GaussianDiffusion:
         """
         if t[0] ==999:
             _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
+            noise = th.randn((), device=x.get_device())
         else:
             x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
         if t[0]!=999:

@@ -560,7 +560,7 @@ class GaussianDiffusion:
         x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
         ## generate heatmaps
-        sigma = random.randint(7, 10)
+        sigma = 8
 
         my_list = []
         for gaze_x, gaze_y in x_t:
@@ -903,8 +903,25 @@ class GaussianDiffusion:
         Same usage as p_sample().
         """
         if t[0] ==999:
-            _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
-            noise = th.randn((), device=x.get_device())
+            # _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
+            # print(x.shape)
+            # print(x.dtype)
+            noise = th.randn((16,2), device=t.device)
+            noise = th.clamp(noise, min=-1 * self.normalization_value, max=self.normalization_value)
+            noise = self.unnormalize(noise,self.normalization_value)
+            sigma = 8
+            my_list = []
+            for gaze_x, gaze_y in noise:
+                gaze_heatmap_i = th.zeros(64, 64)
+
+                gaze_heatmap = get_label_map(
+                gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+                )
+                my_list.append(gaze_heatmap)
+                # print(gaze_heatmap.shape)
+            
+            x=th.stack(my_list,0)
+            x=x.unsqueeze(1).to(t.device,non_blocking=True)
         else:
             x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
         if t[0]!=999:

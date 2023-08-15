@@ -562,7 +562,7 @@ def train_one_epoch(
             if config.losses_parameters.x_loss:
                 total_loss = s_rec_loss + 0.01*Xent_loss
             else:
-                total_loss = s_rec_loss +  f_rec_loss
+                total_loss = s_rec_loss +  0.01*f_rec_loss
 
         if config.Dataset.amp:
             with amp.scale_loss(total_loss, optimizer) as scaled_loss:

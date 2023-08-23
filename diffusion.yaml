@@ -1,9 +1,9 @@
 Dataset:
   source_dataset: "gazefollow"
-  source_dataset_dir: "/nfs/data_todi/datasets/gazefollow_extended"
+  source_dataset_dir: "gaze/datasets/gazefollow_extended/"
   num_workers: 12
   gaze_point_threshold : 0
-  init_weights : "/nfs/data_todi/mhaggag/DiffusionGazeFollowingModel/pretrained/init_weights.pt"
+  init_weights : "pretrained/init_weights.pt"
   # eval_weights : "output/spatial_depth_late_fusion_gazefollow/weightingthe_point_loss_pointpoint1/ckpt_epoch_5.pth"
   eval_weights : 
   lr: 2.5e-4

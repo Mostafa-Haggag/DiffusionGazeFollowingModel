@@ -7,6 +7,8 @@ from config import get_config
 from gaze.datasets import get_dataset
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
+from omegaconf import OmegaConf
+
 def linear_beta_schedule(timesteps):
     """
     linear schedule, proposed in original ddpm paper
@@ -116,19 +118,21 @@ def plottings(schedular_name,step):
     num_timesteps = int(timesteps) 
     sqrt_alphas_cumprod           = torch.sqrt(alphas_cumprod)
     sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - alphas_cumprod)
-    config=get_config()
+    # config=get_config()
+    x1,x2,x3=get_config()
+    config = OmegaConf.merge(x2, x3)
     source_loader, _ = get_dataset(config)
     the_source = iter(source_loader)
     data = next(the_source)
-    print(data[3].shape)
-    print(data[5].shape)
+    # print(data[3].shape)
+    # print(data[5].shape)
     t=torch.arange(0,num_timesteps,step).long()
     print(t)
     plotting_data = []
     normal_range=11
-    myvalue= np.arange(0.1, 1.2, 0.1).tolist()
+    myvalue= np.arange(.1, 1.2, 0.1).tolist()
     for i in range(normal_range):
-        print(data[5][2].squeeze().shape)
+        # print(data[5][2].squeeze().shape)
         heatmap_new = normalize_to_neg_value_to_value(data[5][2].squeeze(),myvalue[i])
         noise = torch.randn_like(heatmap_new)
         new_heatmap = heatmap_new.repeat(t.shape[0],1)
@@ -140,7 +144,7 @@ def plottings(schedular_name,step):
                  sqrt_one_minus_alphas_cumprod, 
                  noise = new_noise
                  )
-        print(x.shape)
+        # print(x.shape)
         x  = x / x.std(axis=(1), keepdims=True) 
         # print(x)
         x = torch.clamp(x, min=-1 * myvalue[i], max=myvalue[i])
@@ -159,7 +163,7 @@ def plottings(schedular_name,step):
             # print(gaze_heatmap.shape)
         
         plotting_data.append(torch.stack(my_list,0))
-    print(len(plotting_data))
+    # print(len(plotting_data))
             # print(gaze_heatmap.numpy().reshape(step,-1).shape)
     plt.rc('axes', titlesize=10)     # fontsize of the axes title
     plt.rc('axes', labelsize=10)
@@ -211,4 +215,4 @@ if __name__ == "__main__":
     np.random.seed(1)
     timesteps = 1000
     betas = linear_beta_schedule(timesteps)
-    plottings('linear',32)
+    plottings('cosine',32)

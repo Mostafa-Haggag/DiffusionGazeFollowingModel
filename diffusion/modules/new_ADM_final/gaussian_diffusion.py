@@ -16,7 +16,7 @@ import torch as th
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood,softargmax2d,calculate_kl_divergence
 from einops import rearrange
-from utils import get_label_map
+from utils import get_label_map_1
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
@@ -565,7 +565,7 @@ class GaussianDiffusion:
         for gaze_x, gaze_y in x_t:
             gaze_heatmap_i = th.zeros(64, 64)
 
-            gaze_heatmap = get_label_map(
+            gaze_heatmap = get_label_map_1(
             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
             )
             my_list.append(gaze_heatmap)
@@ -911,7 +911,7 @@ class GaussianDiffusion:
             for gaze_x, gaze_y in noise:
                 gaze_heatmap_i = th.zeros(64, 64)
 
-                gaze_heatmap = get_label_map(
+                gaze_heatmap = get_label_map_1(
                 gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
                 )
                 my_list.append(gaze_heatmap)

@@ -56,7 +56,7 @@ class MHUGImages(Dataset):
                 show_name = sequence_path.split("/")[-3]
                 clip = sequence_path.split("/")[-2]
 
-                df["path"] = df["path"].apply(lambda path: os.path.join(show_name, clip, path))
+                df["path"] = df["path"].apply(lambda path: os.path.join(clip,"images",path))
 
                 self.X.extend(df.values.tolist())
 

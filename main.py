@@ -173,6 +173,23 @@ def main(config,config_1):
                                 "video/images":wandb_gaze_heatmap_images,
                             }
                 )
+            if config_1.Dataset.source_dataset=="mhug":
+                wandb.init(id=run_id,
+                            resume="must",
+                            save_code=True)
+                wandb.watch(model,log="gradients", log_freq=1000)
+                wandb.log(
+                            {
+                                "epoch": epoch,
+                                "mhug/auc": auc,
+                                "mhug/min_dist": min_dist,
+                                "mhug/avg_dist": avg_dist,
+                                "mhug/min_ang_err": min_ang_err,
+                                "mhug/avg_ang_err": avg_ang_err,
+                                "mhug/avg_ao": avg_ao,
+                                "mhug/images":wandb_gaze_heatmap_images,
+                            }
+                )
             else:
                 wandb.init(id=run_id,
                             resume="must",

@@ -903,7 +903,7 @@ class GaussianDiffusion:
             # _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
             # print(x.shape)
             # print(x.dtype)
-            noise = th.randn((16,2), device=t.device)
+            noise = th.randn((t.shape[0],2), device=t.device)
             noise = th.clamp(noise, min=-1 * self.normalization_value, max=self.normalization_value)
             noise = self.unnormalize(noise,self.normalization_value)
             sigma = 8

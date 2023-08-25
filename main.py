@@ -78,6 +78,7 @@ def main(config,config_1):
         source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
     else:
         target_test_loader = get_dataset_mhug(config_1)
+    
     device = torch.device(config_1.Dataset.device) # the device that you will be working with . 
     print(f"Running on {device}")
     # Load model

@@ -43,7 +43,7 @@ class MHUGImages(Dataset):
 
         self.X = []
         for show_dir in glob.glob(os.path.join(labels_dir, "*")):
-            for sequence_path in glob.glob(os.path.join(show_dir, "*", "*.csv")):
+            for sequence_path in glob.glob(os.path.join(show_dir, "*.csv")):
                 df = pd.read_csv(
                     sequence_path,
                     header=None,
@@ -51,7 +51,7 @@ class MHUGImages(Dataset):
                     names=["path","person_index" ,"xmin", "ymin", "xmax", "ymax", "gazex", "gazey"],
                 )
                 # sampling 20% from the full data set
-                df = df.sample(frac=0.2)
+                # df = df.sample(frac=0.2)
 
                 show_name = sequence_path.split("/")[-3]
                 clip = sequence_path.split("/")[-2]

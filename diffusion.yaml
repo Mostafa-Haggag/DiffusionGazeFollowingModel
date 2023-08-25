@@ -8,7 +8,7 @@ Dataset:
   eval_weights : 
   lr: 2.5e-4
   epochs: 30
-  evaluate_every: 30
+  evaluate_every: 5
   save_every: 5
   print_every: 10
   no_resume: false
@@ -52,7 +52,7 @@ Diffusion:
   adm_learn_sigma: false
   adm_attention_module: false
 experiment_parameter:
-  diff_normalization: 3
+  diff_normalization: 2
   norm_std_flag: true
   random_flag: false
   is_subsample_test_set: false

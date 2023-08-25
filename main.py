@@ -39,7 +39,7 @@ except ImportError:
     print("AMP is not available")
 
 from config import get_config
-from gaze.datasets import get_dataset
+from gaze.datasets import get_dataset,get_dataset_mhug
 from diffusion import get_model, load_pretrained
 from optimizer import get_optimizer
 from schedular import LinearWarmupCosineAnnealingLR
@@ -74,7 +74,10 @@ def main(config,config_1):
     if not config_1.experiment_parameter.Debugging_maps:
         matplotlib.use('Agg')
     print("Loading dataset")
-    source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
+    if config_1.Dataset.source_dataset !="mhug":
+        source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
+    else:
+        target_test_loader = get_dataset_mhug(config_1)
     device = torch.device(config_1.Dataset.device) # the device that you will be working with . 
     print(f"Running on {device}")
     # Load model

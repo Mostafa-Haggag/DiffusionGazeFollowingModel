@@ -52,7 +52,7 @@ Diffusion:
   adm_learn_sigma: false
   adm_attention_module: false
 experiment_parameter:
-  diff_normalization: 2
+  diff_normalization: 3
   norm_std_flag: true
   random_flag: false
   is_subsample_test_set: false

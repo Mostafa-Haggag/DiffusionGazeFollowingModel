@@ -97,7 +97,7 @@ class MHUGImages(Dataset):
 
         if self.depth_on:
             # Load depth image
-            depth = Image.open(os.path.join(self.data_dir, "depths", path))
+            depth = Image.open(os.path.join(self.data_dir, "depth/images", path))
             depth = depth.convert("L")
         # ... and depth
             if self.depth_transform is not None:

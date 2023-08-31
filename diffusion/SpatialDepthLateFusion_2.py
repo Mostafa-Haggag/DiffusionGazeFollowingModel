@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from diffusion.modules.new_ADM_final.unet import UNetModel
 import math
-
+# import torch as th
 class SpatialDepthLateFusion_2(nn.Module):
     def __init__(
         self,
@@ -65,6 +65,7 @@ class SpatialDepthLateFusion_2(nn.Module):
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
+        # encoding_inout = th.sigmoid(encoding_inout)
         x = self.model(heat_map,time,conditioning)
         return x,encoding_inout,scene_face_feat,conditioning
     def forward_shorter (self,heat_map,time,scene_face_feat,conditioning):
@@ -73,5 +74,6 @@ class SpatialDepthLateFusion_2(nn.Module):
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
+        # encoding_inout = th.sigmoid(encoding_inout)
         x = self.model(heat_map,time,conditioning)
         return x,encoding_inout,scene_face_feat,conditioning

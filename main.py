@@ -795,6 +795,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             # you sample for everything which is a problem.
 
             # slicing to remove the uneeded stuff from here. 
+            # gaze_heatmap_pred = gaze_heatmap_pred*inout.unsqueeze(-1).unsqueeze(-1)
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
 
             # Sets the number of jobs according to batch size and cpu counts. In any case, no less than 1 and more than

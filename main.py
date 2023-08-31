@@ -546,7 +546,7 @@ def train_one_epoch(
                                                     epoch,config.experiment_parameter.Debugging_maps
                                                     )
         s_rec_loss = torch.mul(losses["loss"] * weights, s_gaze_inside.mean(axis=1))
-        s_rec_loss = torch.sum(losses["loss"] * weights) / torch.sum(s_gaze_inside.mean(axis=1))
+        s_rec_loss = torch.sum(s_rec_loss * weights) / torch.sum(s_gaze_inside.mean(axis=1))
         if config.losses_parameters.other_loss:
             output_loss = mse_loss(losses["location"], torch.flip(gaze_points.squeeze(1), [1]))
             if config.losses_parameters.kl_div_loss:

@@ -16,7 +16,7 @@ import torch as th
 from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood,softargmax2d,calculate_kl_divergence
 from einops import rearrange
-from utils import get_label_map_1
+from utils import get_label_map_1,batch_argmax
 
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
@@ -881,7 +881,100 @@ class GaussianDiffusion:
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning'],
                       }
-    # DDIM SAMPLE
+        
+    ###############################################################################################
+    ##TODO  Changes sampling directly in a different want
+    # def ddim_sample(
+    #     self,
+    #     model,
+    #     x,
+    #     t,
+    #     clip_denoised=True,
+    #     denoised_fn=None,
+    #     cond_fn=None,
+    #     model_kwargs=None,
+    #     eta=0.0,
+        
+    # ):
+    #     """
+    #     Sample x_{t-1} from the model using DDIM.
+
+    #     Same usage as p_sample().
+    #     """
+    #     if t[0] ==999:
+    #         noise = th.randn((t.shape[0],2), device=t.device)
+    #         noise = th.clamp(noise, min=-1 * self.normalization_value, max=self.normalization_value)
+    #         noise = self.unnormalize(noise,self.normalization_value)
+    #         sigma = 8
+    #         my_list = []
+    #         for gaze_x, gaze_y in noise:
+    #             gaze_heatmap_i = th.zeros(64, 64)
+
+    #             gaze_heatmap = get_label_map_1(
+    #             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+    #             )
+    #             my_list.append(gaze_heatmap)            
+    #         x=th.stack(my_list,0)
+    #         x=x.unsqueeze(1).to(t.device,non_blocking=True)
+    #     else:
+    #         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
+    #     if t[0]!=999:
+    #         Flag_unetsampling = True
+    #     else:
+    #         Flag_unetsampling = False
+    #     out = self.p_mean_variance(
+    #         model,
+    #         x,
+    #         t,
+    #         clip_denoised=clip_denoised,
+    #         denoised_fn=denoised_fn,
+    #         model_kwargs=model_kwargs,
+    #         Flag_unetsampling=Flag_unetsampling
+    #     )
+    #     if cond_fn is not None:
+    #         out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
+    #     if t[0]<0:
+    #         return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
+    #     # Usually our model outputs epsilon, but we re-derive it
+    #     # in case we used x_start or x_prev prediction.
+    #     # extract the maxium over a batch of samples # you dividie by 64 as the return is between
+    #     # 0 to 64
+    #     new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
+    #     new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
+    #     eps = self._predict_eps_from_xstart(new_x, t, new_out)
+
+    #     alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, new_x.shape)
+    #     alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, new_x.shape)
+    #     sigma = (
+    #         eta
+    #         * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
+    #         * th.sqrt(1 - alpha_bar / alpha_bar_prev)
+    #     )
+    #     # Equation 12.
+    #     noise = th.randn_like(new_x)
+    #     mean_pred = (
+    #         new_out * th.sqrt(alpha_bar_prev)
+    #         + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
+    #     )
+    #     sample = mean_pred + sigma * noise
+    #     sigma = 8
+
+    #     my_list = []
+    #     for gaze_x, gaze_y in sample:
+    #         gaze_heatmap_i = th.zeros(64, 64)
+
+    #         gaze_heatmap = get_label_map_1(
+    #         gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+    #         )
+    #         my_list.append(gaze_heatmap)
+    #         # print(gaze_heatmap.shape)
+        
+    #     x_t_final=th.stack(my_list,0)
+    #     x_t_final=x_t_final.unsqueeze(1)
+    #     x_t_final=x_t_final.to(x.device, non_blocking=True)
+    #     return {"sample": x_t_final, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
+
+    # DDIM SAMPLE ORGINAL
     def ddim_sample(
         self,
         model,
@@ -914,9 +1007,7 @@ class GaussianDiffusion:
                 gaze_heatmap = get_label_map_1(
                 gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
                 )
-                my_list.append(gaze_heatmap)
-                # print(gaze_heatmap.shape)
-            
+                my_list.append(gaze_heatmap)            
             x=th.stack(my_list,0)
             x=x.unsqueeze(1).to(t.device,non_blocking=True)
         else:

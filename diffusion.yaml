@@ -1,10 +1,12 @@
 Dataset:
+  # source_dataset: "videoattentiontarget"
+  # source_dataset_dir: "gaze/datasets/video_dataset/"
   source_dataset: "gazefollow"
   source_dataset_dir: "gaze/datasets/gazefollow_extended/"
   num_workers: 12
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
-  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/weightingthe_point_loss_pointpoint1/ckpt_epoch_5.pth"
+  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/point_loss_norm_3_weighted_losses/ckpt_epoch_30.pth"
   eval_weights : 
   lr: 2.5e-4
   epochs: 30
@@ -59,7 +61,7 @@ experiment_parameter:
   Debugging_maps: false
   eval_from_picture: false
   clip_denoised: false
-  lr_schedular: true
+  lr_schedular: false
   fix_snr : false
   offset_noise_strength: 0.1
   noise_changer: false
@@ -67,6 +69,6 @@ experiment_parameter:
   lr_anneal_steps: 0
 losses_parameters:
   kl_div_loss: false
-  x_loss: false
+  x_loss: true
   other_loss: false
   mse_loss_weight_type: "constant"

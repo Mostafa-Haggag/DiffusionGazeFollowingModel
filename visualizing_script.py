@@ -1,3 +1,8 @@
+'''
+To run script
+python3 visualizing_script.py --yaml_diffusion diffusion.yaml --yaml_gaze gaze.yaml --tag point_loss_norm_7_weighted_losses --check_img test2/00000001/0000000.jpg --threshold 0.7
+
+'''
 import multiprocessing
 import os
 import random

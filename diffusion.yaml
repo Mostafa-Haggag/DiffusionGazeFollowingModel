@@ -1,11 +1,11 @@
 Dataset:
-  source_dataset: "gazefollow"
-  source_dataset_dir: "gaze/datasets/gazefollow_extended"
+  source_dataset: "mhug"
+  source_dataset_dir: "gaze/datasets/mhug"
   num_workers: 8
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
-  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/default/ckpt_epoch_1.pth"
-  eval_weights : 
+  eval_weights : "/media/mostafahaggag/Shared_Drive/evaluating/ckpt_epoch_30_nodepth_bce_on.pth"
+  # eval_weights : 
   lr: 2.5e-4
   epochs: 30
   evaluate_every: 30

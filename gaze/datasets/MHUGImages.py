@@ -42,6 +42,8 @@ class MHUGImages(Dataset):
 
 
         self.X = []
+        # all_dfs = []
+
         for show_dir in glob.glob(os.path.join(labels_dir, "*")):
             for sequence_path in glob.glob(os.path.join(show_dir, "*.csv")):
                 df = pd.read_csv(
@@ -57,11 +59,11 @@ class MHUGImages(Dataset):
                 clip = sequence_path.split("/")[-2]
 
                 df["path"] = df["path"].apply(lambda path: os.path.join(clip,"images",path))
-
+                # all_dfs.append(df)  # Append each DataFrame to the list
                 self.X.extend(df.values.tolist())
-
         self.length = len(self.X)
-
+        # final_df = pd.concat(all_dfs, axis=0, ignore_index=True)
+        # final_df.to_csv('meow.csv')
         print(f"Total images: {self.length}")
 
     def __getitem__(self, index):

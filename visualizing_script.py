@@ -356,13 +356,14 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
             ao = get_ap(gaze_inout.cpu().numpy(),inout.cpu().numpy())
             ao_meter.update(ao)
 
-            metrics = list(filter(partial(is_not, None),metrics ))
+            # metrics = list(filter(partial(is_not, None),metrics ))
             auc_list =[]
             auc_list_extractor =[]
             # for metric in metrics:
             for index, metric in enumerate(metrics):
     
                 if metric is None:
+                    auc_list.append(-1)
                     continue
 
                 auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err = metric
@@ -374,8 +375,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                             auc_list_extractor.append(index)
                             break
                 else:
-                    auc_list.append(auc_score)
                     if(auc_score>=threshold):
+                        auc_list.append(auc_score)
                         auc_list_extractor.append(index)
                     
                 auc_meter.update(auc_score)

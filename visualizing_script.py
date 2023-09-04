@@ -1,7 +1,7 @@
 '''
 To run script
 python3 visualizing_script.py --yaml_diffusion diffusion.yaml --yaml_gaze gaze.yaml --tag point_loss_norm_7_weighted_losses --check_img test2/00000001/0000000.jpg --threshold 0.7
-
+python3 visualizing_script.py --yaml_diffusion diffusion.yaml --yaml_gaze gaze.yaml --tag point_loss_norm_7_weighted_losses --check_img 4/images/frame_000005.PNG --threshold 0.7
 '''
 import multiprocessing
 import os
@@ -326,7 +326,6 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
             faces = faces.to(device, non_blocking=True, memory_format=get_memory_format(config))
             masks = masks.to(device, non_blocking=True, memory_format=get_memory_format(config))
             gaze_inout = gaze_inout.to(device, non_blocking=True).float()
-            # print(type(path))
             if check_img != '':
                 if check_img not in path:
                     assert (batch + 1) != len(loader), "ERROR you have entered a wrong directory so it cannot be found"
@@ -374,6 +373,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                 auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err = metric
                 if check_img != '':
                         if check_img != path[index]:
+                            auc_list.append(-1)
                             continue
                         else:
                             auc_list.append(auc_score)
@@ -389,10 +389,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                 min_ang_error_meter.update(min_ang_err)
                 avg_dist_meter.update(avg_dist)
                 avg_ang_error_meter.update(avg_ang_err)
-            if check_img != '':
-                sliced_list=auc_list
-            else:
-                sliced_list = [auc_list[i] for i in auc_list_extractor]
+            sliced_list = [auc_list[i] for i in auc_list_extractor]
             wandb_gaze_heatmap_images= validate_images(
                                                     images_copy[auc_list_extractor,:],
                                                     gazer_mask[auc_list_extractor,:],

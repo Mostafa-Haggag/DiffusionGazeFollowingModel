@@ -36,7 +36,8 @@ from PIL import Image
 import wandb
 import io
 from omegaconf import OmegaConf
-
+from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import auc
 try:
     # noinspection PyUnresolvedReferences
     from apex import amp
@@ -267,7 +268,7 @@ def validate_images(image,gazemap_gn,gazemap_pred,vector,epoch,sorted_list=None,
             cax = divider.append_axes("right", size="3%", pad=0.05)
             plt.colorbar(img, cax=cax)
             if sorted_list != None:
-                data_to_read = "_{:.2f}".format(sorted_list[idx])
+                data_to_read = "_{:.4f}".format(sorted_list[idx])
                 ax_heatmap_pred.set_title(Title_figure_3+data_to_read,fontsize=12)
             else:
                 ax_heatmap_pred.set_title(Title_figure_3,fontsize=12)
@@ -370,18 +371,18 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     auc_list.append(-1)
                     continue
 
-                auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err = metric
+                auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err,auc_precision_recall = metric
                 if check_img != '':
                         if check_img != path[index]:
                             auc_list.append(-1)
                             continue
                         else:
-                            auc_list.append(auc_score)
+                            auc_list.append(auc_precision_recall)
                             auc_list_extractor.append(index)
                             break
                 else:
                     if(auc_score>=threshold):
-                        auc_list.append(auc_score)
+                        auc_list.append(auc_precision_recall)
                         auc_list_extractor.append(index)
                     
                 auc_meter.update(auc_score)
@@ -439,6 +440,13 @@ def evaluate_one_item(
 
     multi_hot = get_multi_hot_map(valid_gaze, img_size) # ground truth 
     scaled_heatmap = resize(gaze_heatmap_pred, (img_size[1], img_size[0]))# resize it 
+    #  np.reshape(onehot_im, onehot_im.size)
+    # print(multi_hot.shape)
+    # print(np.reshape(multi_hot, multi_hot.size).shape)
+    precision, recall, thresholds = precision_recall_curve(np.reshape(multi_hot, multi_hot.size), np.reshape(scaled_heatmap, scaled_heatmap.size))
+    # auc_precision_recall = auc(recall, precision)
+    auc_precision_recall = get_ap(np.reshape(multi_hot, multi_hot.size), np.reshape(scaled_heatmap, scaled_heatmap.size))
+
     auc_score = get_auc(scaled_heatmap, multi_hot)
 
     pred_x, pred_y = get_heatmap_peak_coords(gaze_heatmap_pred)#predicted points 
@@ -451,7 +459,7 @@ def evaluate_one_item(
 
     mean_gt_gaze = torch.mean(valid_gaze, 0)
     avg_distance = get_l2_dist(mean_gt_gaze, norm_p)
-    return auc_score, min(all_distances), avg_distance, min(all_angular_errors), np.mean(all_angular_errors)
+    return auc_score, min(all_distances), avg_distance, min(all_angular_errors), np.mean(all_angular_errors),auc_precision_recall*100
 
 if __name__ == "__main__":
     # Make runs repeatable as much as possible

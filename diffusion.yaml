@@ -1,6 +1,8 @@
 Dataset:
-  source_dataset: "mhug"
-  source_dataset_dir: "gaze/datasets/mhug"
+  source_dataset: "videoattentiontarget"
+  source_dataset_dir: "gaze/datasets/video_dataset"
+  # source_dataset: "mhug"
+  # source_dataset_dir: "gaze/datasets/mhug"
   num_workers: 8
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"

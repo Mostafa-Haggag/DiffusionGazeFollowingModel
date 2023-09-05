@@ -147,7 +147,7 @@ def main(config,config_1):
         if config_1.Dataset.amp:
                 model, optimizer = amp.initialize(model, optimizer, opt_level=config_1.Dataset.amp)
         ## TODO: check the evaluate funciton in here !!!!!!!
-        auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \
+        auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,avg_heatmpap_ao,wandb_gaze_heatmap_images = \
                                         evaluate(config_1, 
                                                 model,
                                                 epoch,
@@ -171,6 +171,7 @@ def main(config,config_1):
                                 "video/min_ang_err": min_ang_err,
                                 "video/avg_ang_err": avg_ang_err,
                                 "video/avg_ao": avg_ao,
+                                "video/avg_hm_ao": avg_heatmpap_ao,
                                 "video/images":wandb_gaze_heatmap_images,
                             }
                 )
@@ -188,6 +189,7 @@ def main(config,config_1):
                                 "mhug/min_ang_err": min_ang_err,
                                 "mhug/avg_ang_err": avg_ang_err,
                                 "mhug/avg_ao": avg_ao,
+                                "mhug/avg_hm_ao": avg_heatmpap_ao,
                                 "mhug/images":wandb_gaze_heatmap_images,
                             }
                 )
@@ -205,6 +207,7 @@ def main(config,config_1):
                                 "val/min_ang_err": min_ang_err,
                                 "val/avg_ang_err": avg_ang_err,
                                 "val/avg_ao": avg_ao,
+                                "val/avg_hm_ao": avg_heatmpap_ao,
                                 "val/images":wandb_gaze_heatmap_images,
                             }
                 )
@@ -431,7 +434,7 @@ def main(config,config_1):
             if (ep + 1) % config_1.Dataset.evaluate_every == 0 or (ep + 1) == config_1.Dataset.epochs:
                 print("Starting evaluation")
                 
-                auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,wandb_gaze_heatmap_images = \
+                auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,avg_heatmpap_ao,wandb_gaze_heatmap_images = \
                                         evaluate(config_1, 
                                                 model,
                                                 ep+1,
@@ -451,6 +454,7 @@ def main(config,config_1):
                             "val/min_ang_err": min_ang_err,
                             "val/avg_ang_err": avg_ang_err,
                             "val/avg_ao":avg_ao,
+                            "val/avg_hm_ao": avg_heatmpap_ao,
                             "val/images":wandb_gaze_heatmap_images,
                     }
                     )
@@ -724,6 +728,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
     min_ang_error_meter = AverageMeter()
     avg_ang_error_meter = AverageMeter()
     ao_meter =  AverageMeter()
+    ao_heat_map_meter =  AverageMeter()
     gaze_to_save = 4
     previous_sorted_list = []
     #### meow meoww
@@ -858,8 +863,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                 if metric is None:
                     continue
 
-                auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err = metric
-
+                auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err,ao_heatmap = metric
+                ao_heat_map_meter.update(ao_heatmap)
                 auc_meter.update(auc_score)
                 min_dist_meter.update(min_dist)
                 min_ang_error_meter.update(min_ang_err)
@@ -875,6 +880,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                     f"\t AVG. ANG. ERR. {avg_ang_error_meter.avg:.3f}"
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
                     f"\t MIN. AO. {ao_meter.avg:.3f}"
+                    f"\t MIN. AO. for heatmap {ao_heat_map_meter.avg:.3f}"
 
                 )
                 if (batch + 1) == len(loader) or config.experiment_parameter.Debugging_maps:
@@ -892,6 +898,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
         min_ang_error_meter.avg,
         avg_ang_error_meter.avg,
         ao_meter.avg,
+        ao_heat_map_meter.avg,
         wandb_gaze_heatmap_images
     )
 
@@ -914,6 +921,10 @@ def evaluate_one_item(
     # Skip items that do not have valid gaze coords
     if len(valid_gaze) == 0:
         return
+    # print(type(img_size))
+    org_hot = get_multi_hot_map(valid_gaze, torch.full((2,), 64,dtype=torch.int32)) # ground truth 
+    unscaled_heatmap = resize(gaze_heatmap_pred, (64, 64))
+    auc_precision_recall = get_ap(np.reshape(org_hot, org_hot.size), np.reshape(unscaled_heatmap, unscaled_heatmap.size))
 
     # AUC: area under curve of ROC
     multi_hot = get_multi_hot_map(valid_gaze, img_size) # ground truth 
@@ -932,7 +943,7 @@ def evaluate_one_item(
     # Average distance: distance between the predicted point and human average point
     mean_gt_gaze = torch.mean(valid_gaze, 0)
     avg_distance = get_l2_dist(mean_gt_gaze, norm_p)
-    return auc_score, min(all_distances), avg_distance, min(all_angular_errors), np.mean(all_angular_errors)
+    return auc_score, min(all_distances), avg_distance, min(all_angular_errors), np.mean(all_angular_errors),auc_precision_recall
 
 
 if __name__ == "__main__":

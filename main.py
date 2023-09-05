@@ -214,6 +214,7 @@ def main(config,config_1):
         # Print summary
         print("\nEval summary")
         print(f"AUC: {auc:.3f}")
+        print(f"Gaze heatmap AP: {avg_heatmpap_ao:.3f}")
         print(f"Minimum distance: {min_dist:.3f}")
         print(f"Average distance: {avg_dist:.3f}")
         print(f"Minimum angular error: {min_ang_err:.3f}")

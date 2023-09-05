@@ -28,7 +28,7 @@ Dataset:
 Diffusion:
   schedule_type: 'linear'
   unet_inout_channels: 1
-  unet_inplanes: 32
+  unet_inplanes: 8
   unet_residual: 1
   list_unet_inplanes_multipliers: 
       - 1
@@ -69,6 +69,6 @@ experiment_parameter:
   lr_anneal_steps: 0
 losses_parameters:
   kl_div_loss: false
-  x_loss: true
+  x_loss: false
   other_loss: false
   mse_loss_weight_type: "constant"

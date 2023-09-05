@@ -7,7 +7,8 @@ Dataset:
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_4_weighted_losses/ckpt_epoch_30.pth"
-  eval_weights : 
+  eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_3_weighted_losses/ckpt_epoch_30.pth"
+  # eval_weights : 
   lr: 2.5e-4
   epochs: 30
   evaluate_every: 30
@@ -54,7 +55,7 @@ Diffusion:
   adm_learn_sigma: false
   adm_attention_module: false
 experiment_parameter:
-  diff_normalization: 4
+  diff_normalization: 3
   norm_std_flag: true
   random_flag: false
   is_subsample_test_set: false
@@ -69,6 +70,6 @@ experiment_parameter:
   lr_anneal_steps: 0
 losses_parameters:
   kl_div_loss: false
-  x_loss: false
+  x_loss: true
   other_loss: false
   mse_loss_weight_type: "constant"

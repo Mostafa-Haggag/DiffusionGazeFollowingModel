@@ -902,8 +902,8 @@ class GaussianDiffusion:
     #     Same usage as p_sample().
     #     """
     #     if t[0] ==999:
-    #         noise = th.randn((t.shape[0],2), device=t.device)
-    #         noise = th.clamp(noise, min=-1 * self.normalization_value, max=self.normalization_value)
+    #         x = th.randn((t.shape[0],2), device=t.device)
+    #         noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
     #         noise = self.unnormalize(noise,self.normalization_value)
     #         sigma = 8
     #         my_list = []
@@ -914,17 +914,32 @@ class GaussianDiffusion:
     #             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
     #             )
     #             my_list.append(gaze_heatmap)            
-    #         x=th.stack(my_list,0)
-    #         x=x.unsqueeze(1).to(t.device,non_blocking=True)
+    #         x_hm=th.stack(my_list,0)
+    #         x_hm=x_hm.unsqueeze(1).to(t.device,non_blocking=True)
     #     else:
-    #         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
+    #         # x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
+    #         x_point  = x / x.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x
+
+    #         x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
+    #         x_point = self.unnormalize(x_point,self.normalization_value)
+    #         sigma = 8
+    #         my_list = []
+    #         for gaze_x, gaze_y in x_point:
+    #             gaze_heatmap_i = th.zeros(64, 64)
+
+    #             gaze_heatmap = get_label_map_1(
+    #             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+    #             )
+    #             my_list.append(gaze_heatmap)            
+    #         x_hm=th.stack(my_list,0)
+    #         x_hm=x_hm.unsqueeze(1).to(t.device,non_blocking=True)
     #     if t[0]!=999:
     #         Flag_unetsampling = True
     #     else:
     #         Flag_unetsampling = False
     #     out = self.p_mean_variance(
     #         model,
-    #         x,
+    #         x_hm,
     #         t,
     #         clip_denoised=clip_denoised,
     #         denoised_fn=denoised_fn,
@@ -933,48 +948,57 @@ class GaussianDiffusion:
     #     )
     #     if cond_fn is not None:
     #         out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
+        
+    #     # new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
+    #     new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
+    #     new_out = self.normalize(new_out,self.normalization_value)
+    #     new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
+    #     # new_x = self.normalize(new_x,self.normalization_value)
+    #     # new_x = th.clamp(new_x, min=-1 * self.normalization_value, max=self.normalization_value)   
     #     if t[0]<0:
     #         return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
     #     # Usually our model outputs epsilon, but we re-derive it
     #     # in case we used x_start or x_prev prediction.
     #     # extract the maxium over a batch of samples # you dividie by 64 as the return is between
     #     # 0 to 64
-    #     new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
-    #     new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
-    #     eps = self._predict_eps_from_xstart(new_x, t, new_out)
+    #     # print(x.shape)
+    #     # print(t.shape)
+    #     # print(new_out.shape)
 
-    #     alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, new_x.shape)
-    #     alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, new_x.shape)
+    #     eps = self._predict_eps_from_xstart(x, t, new_out)
+
+    #     alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
+    #     alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x.shape)
     #     sigma = (
     #         eta
     #         * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
     #         * th.sqrt(1 - alpha_bar / alpha_bar_prev)
     #     )
     #     # Equation 12.
-    #     noise = th.randn_like(new_x)
+    #     noise = th.randn_like(x)
     #     mean_pred = (
     #         new_out * th.sqrt(alpha_bar_prev)
     #         + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
     #     )
     #     sample = mean_pred + sigma * noise
-    #     sigma = 8
+    #     # sigma = 8
 
-    #     my_list = []
-    #     for gaze_x, gaze_y in sample:
-    #         gaze_heatmap_i = th.zeros(64, 64)
+    #     # my_list = []
+    #     # for gaze_x, gaze_y in sample:
+    #     #     gaze_heatmap_i = th.zeros(64, 64)
 
-    #         gaze_heatmap = get_label_map_1(
-    #         gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
-    #         )
-    #         my_list.append(gaze_heatmap)
-    #         # print(gaze_heatmap.shape)
+    #     #     gaze_heatmap = get_label_map_1(
+    #     #     gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+    #     #     )
+    #     #     my_list.append(gaze_heatmap)
+    #     #     # print(gaze_heatmap.shape)
         
-    #     x_t_final=th.stack(my_list,0)
-    #     x_t_final=x_t_final.unsqueeze(1)
-    #     x_t_final=x_t_final.to(x.device, non_blocking=True)
-    #     return {"sample": x_t_final, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
+    #     # x_t_final=th.stack(my_list,0)
+    #     # x_t_final=x_t_final.unsqueeze(1)
+    #     # x_t_final=x_t_final.to(x.device, non_blocking=True)
+    #     return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
 
-    # DDIM SAMPLE ORGINAL
+    ### DDIM SAMPLE ORGINAL
     def ddim_sample(
         self,
         model,
@@ -1012,6 +1036,8 @@ class GaussianDiffusion:
             x=x.unsqueeze(1).to(t.device,non_blocking=True)
         else:
             x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
+            x = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
+            x = self.unnormalize(x,self.normalization_value)
         if t[0]!=999:
             Flag_unetsampling = True
         else:
@@ -1025,6 +1051,8 @@ class GaussianDiffusion:
             model_kwargs=model_kwargs,
             Flag_unetsampling=Flag_unetsampling
         )
+        out["pred_xstart"] = self.normalize(out["pred_xstart"],self.normalization_value)
+        out["pred_xstart"] = th.clamp(out["pred_xstart"], min=-1 * self.normalization_value, max=self.normalization_value)
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
         if t[0]<0:
@@ -1121,7 +1149,7 @@ class GaussianDiffusion:
         if noise is not None:
             img = noise
         else:
-            img = th.randn(*shape, device=device)
+            img = th.randn((shape[0],2), device=device)
         # I am sampling in here not till 1000 but till specific number of sample steps 
         # img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
         # indices = list(range(self.sample_steps))[::-1]

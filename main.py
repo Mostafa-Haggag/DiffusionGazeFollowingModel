@@ -176,7 +176,7 @@ def main(config,config_1):
                 wandb.watch(model,log="gradients", log_freq=1000)
                 wandb.log(
                     {
-                            "epoch": ep + 1,
+                            "epoch": epoch + 1,
                             "val/auc": auc,
                             "val/min_dist": min_dist,
                             "val/avg_dist": avg_dist,
@@ -767,6 +767,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             model,
             (images_copy.shape[0], 1, 64, 64),
             model_kwargs=micro_cond,
+            clip_denoised=False,
             progress=True
             )
             # print(gaze_heatmap_pred.shape)

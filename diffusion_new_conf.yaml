@@ -2,10 +2,10 @@ Dataset:
   # source_dataset: "videoattentiontarget"
   # source_dataset_dir: "gaze/datasets/video_dataset/"
   source_dataset: "gazefollow"
-  source_dataset_dir: "gaze/datasets/gazefollow_extended/"
+  source_dataset_dir: "/nfs/data_todi/datasets/gazefollow_extended"
   num_workers: 12
   gaze_point_threshold : 0
-  init_weights : "pretrained/init_weights.pt"
+  init_weights : "/nfs/data_todi/mhaggag/DiffusionGazeFollowingModel/pretrained/init_weights.pt"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_4_weighted_losses/ckpt_epoch_30.pth"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_3_weighted_losses/ckpt_epoch_30.pth"
   eval_weights : 

@@ -341,6 +341,5 @@ video_dataset
 models/modules/ignored_modules
 ckpt_epoch_30.pth
 understand_code.py
-*.yaml
 slurm*
 *.sh

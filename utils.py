@@ -171,10 +171,10 @@ def unravel_index(
         unravel coordinates, (*, N, D).
     """
 
-    shape = torch.tensor(shape)
+    shape = torch.tensor(shape).to(indices.device)
     indices = indices % shape.prod()  # prevent out-of-bounds indices
 
-    coord = torch.zeros(indices.size() + shape.size(), dtype=int)
+    coord = torch.zeros(indices.size() + shape.size(), dtype=int).to(indices.device)
 
     for i, dim in enumerate(reversed(shape)):
         coord[..., i] = indices % dim
@@ -193,7 +193,7 @@ def batch_argmax(tensor, batch_dim=1):
     batch_shape = tensor.shape[:batch_dim]
     non_batch_shape = tensor.shape[batch_dim:]
     flat_non_batch_size = prod(non_batch_shape)
-    tensor_with_flat_non_batch_portion = tensor.reshape(*batch_shape, flat_non_batch_size)
+    tensor_with_flat_non_batch_portion = tensor.reshape(*batch_shape, flat_non_batch_size).to(tensor.device)
 
     dimension_of_indices = len(non_batch_shape)
 
@@ -205,7 +205,7 @@ def batch_argmax(tensor, batch_dim=1):
         batch_size = prod(batch_shape)
         if batch_size == 0:  # if batch dimensions are empty
             # return empty tensor of appropriate shape
-            batch_of_unraveled_indices = torch.ones(*batch_shape, dimension_of_indices).long()  # 'ones' is irrelevant as it will be empty
+            batch_of_unraveled_indices = torch.ones(*batch_shape, dimension_of_indices).to(tensor.device).long()  # 'ones' is irrelevant as it will be empty
         else:  # non-batch dimensions are empty, so argmax indices are undefined
             raise NoArgMaxIndices()
     else:   # We actually have elements to maximize, so we search for them

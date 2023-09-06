@@ -771,7 +771,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             model,
             (images_copy.shape[0], 1, 64, 64),
             model_kwargs=micro_cond,
-            clip_denoised=False,
+            clip_denoised=True,
             progress=True
             )
             # print(gaze_heatmap_pred.shape)
@@ -862,7 +862,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                     f"\t AVG. ANG. ERR. {avg_ang_error_meter.avg:.3f}"
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
                     f"\t MIN. AO. {ao_meter.avg:.3f}"
-                    f"\t MIN. AO. {ao_meter.avg:.3f}"
+                    f"\t MIN. HM AO. {ao_heat_map_meter.avg:.3f}"
 
                 )
                 if (batch + 1) == len(loader) or config.experiment_parameter.Debugging_maps:

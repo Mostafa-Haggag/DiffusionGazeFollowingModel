@@ -386,7 +386,7 @@ class GaussianDiffusion:
             if denoised_fn is not None:
                 x = denoised_fn(x)
             if clip_denoised:
-                return x.clamp(-1*self.normalization_value, 1*self.normalization_value)
+                return x.clamp(0, 1*self.normalization_value)
             return x
 
         if self.model_mean_type == ModelMeanType.PREVIOUS_X:# this is V case!!!
@@ -1122,7 +1122,7 @@ class GaussianDiffusion:
             eta=eta,
         ):
             final = sample
-        return self.unnormalize(final["sample"],self.normalization_value),final["inout"]
+        return th.clamp(final["sample"],0,1),final["inout"]
 
     def ddim_sample_loop_progressive(
         self,

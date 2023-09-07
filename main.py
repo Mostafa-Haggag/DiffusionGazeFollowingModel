@@ -564,7 +564,7 @@ def train_one_epoch(
                 total_loss = 100000*s_rec_loss + 10000*output_loss
         else:
             if config.losses_parameters.x_loss:
-                total_loss = s_rec_loss + 0.01*Xent_loss
+                total_loss = 10000*s_rec_loss + 100*Xent_loss
             else:
                 total_loss = s_rec_loss
 

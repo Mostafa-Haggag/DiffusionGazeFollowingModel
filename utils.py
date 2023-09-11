@@ -178,7 +178,8 @@ def unravel_index(
 
     for i, dim in enumerate(reversed(shape)):
         coord[..., i] = indices % dim
-        indices = indices // dim
+        indices = torch.div(indices,dim,rounding_mode='floor')
+        # indices = indices // dim
 
     return coord
 def batch_argmax(tensor, batch_dim=1):

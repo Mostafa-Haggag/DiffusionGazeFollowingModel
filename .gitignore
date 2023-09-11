@@ -344,3 +344,4 @@ understand_code.py
 run_model.sh
 gaze_cluster.yaml
 gaze_cluster.yaml
+*.pth

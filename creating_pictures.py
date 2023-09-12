@@ -349,25 +349,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
             for index, metric in enumerate(metrics):
 
                 if metric is None:
-                    auc_list.append(-1)
                     continue
                 ao_index = get_ap(gaze_inout.cpu().numpy()[index],inout.cpu().numpy()[index])
                 auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err,auc_precision_recall = metric
-                if check_img != '':
-                        if check_img != path[index]:
-                            auc_list.append(-1)
-                            continue
-                        else:
-                            auc_list.append(auc_score)
-                            auc_list_extractor.append(index)
-                            break
-                else:
-                    if(auc_score>=threshold):
-                        new_path.append("../normal_diffusion/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
-                        auc_list.append(auc_score)
-                        auc_list_extractor.append(index)
-                    else:
-                        auc_list.append(-1)
+                new_path.append("../normal_diffusion/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
+                auc_list.append(auc_score)
+                auc_list_extractor.append(index)
+
                 data_list.append([str(batch)+"_"+str(index)+"_"+path[index],auc_score.item(), min_dist.item(), avg_dist.item(), min_ang_err.item(), avg_ang_err.item(),ao_index])
                 auc_meter.update(auc_score)
                 min_dist_meter.update(min_dist)

@@ -199,7 +199,7 @@ def fig2img(fig):
     buf.seek(0)
     img = Image.open(buf)
     return img
-def validate_images(image,gazemap_gn,gazemap_pred,vector,epoch,sorted_list=None,Title_figure_3="Pred",new_path=None):
+def validate_images(image,gazemap_gn,gazemap_pred,vector,epoch,Title_figure_3="Pred",new_path=None):
         invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
                                                      std = [ 1/0.229, 1/0.224, 1/0.225 ]),
                                 transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
@@ -366,13 +366,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                 min_ang_error_meter.update(min_ang_err)
                 avg_dist_meter.update(avg_dist)
                 avg_ang_error_meter.update(avg_ang_err)
-            sliced_list = [auc_list[i] for i in auc_list_extractor]
+            # sliced_list = [auc_list[i] for i in auc_list_extractor]
             wandb_gaze_heatmap_images= validate_images(
                                                     images_copy[auc_list_extractor,:],
                                                     gazer_mask[auc_list_extractor,:],
                                                     gaze_heatmap_pred[auc_list_extractor,:],
                                                     coordinates_test[auc_list_extractor,:],
-                                                    epoch,sliced_list,new_path=new_path
+                                                    epoch,new_path=new_path
                                                     )
 
             if (batch + 1) % print_every == 0 or (batch + 1) == len(loader):

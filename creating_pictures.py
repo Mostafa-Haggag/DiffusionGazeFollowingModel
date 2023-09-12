@@ -335,7 +335,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
             n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.Dataset.batch_size))# njobs = 8
             gaze_inside_all.extend(gaze_inout.cpu().tolist())
-            gaze_inside_pred_all.extend(gaze_heatmap_pred.cpu().tolist())
+            gaze_inside_pred_all.extend(inout.cpu().tolist())
             metrics = Parallel(n_jobs=n_jobs)(
                 delayed(evaluate_one_item)(
                     gaze_heatmap_pred[b_i], eye_coords[b_i], gaze_coords[b_i], img_size[b_i], output_size

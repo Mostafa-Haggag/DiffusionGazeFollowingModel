@@ -356,7 +356,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     continue
                 ao_index = get_ap(gaze_inout.cpu().numpy()[index],inout.cpu().numpy()[index])
                 auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err,auc_precision_recall = metric
-                new_path.append("../normal_diffusion_depth/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
+                new_path.append("../normal_diffusion_no_depth/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
                 auc_list.append(auc_score)
                 auc_list_extractor.append(index)
 
@@ -383,7 +383,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     f"\t MIN. DIST. {min_dist_meter.avg:.3f}"
                     f"\t AVG. ANG. ERR. {avg_ang_error_meter.avg:.3f}"
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
-                    f"\t MIN. AO. {ao_meter.avg:.3f}"
+                    f"\t MIN. AO. {get_ap(gaze_inside_all, gaze_inside_pred_all):.3f}"
                 )
     gaze_inside_ap = get_ap(gaze_inside_all, gaze_inside_pred_all)
     columns = [
@@ -399,7 +399,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     print(ao_meter.avg)
     data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,gaze_inside_ap])
     df = pd.DataFrame(data_list, columns=columns)
-    filename = "evaluation_data.csv"
+    filename = "evaluation_data_3.csv"
     df.to_csv(filename, header=True, index=False)
     return (
         auc_meter.avg,

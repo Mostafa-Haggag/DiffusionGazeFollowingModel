@@ -345,3 +345,7 @@ run_model.sh
 gaze_cluster.yaml
 gaze_cluster.yaml
 *.pth
+*.yaml
+*.sh
+*.out
+*.csv

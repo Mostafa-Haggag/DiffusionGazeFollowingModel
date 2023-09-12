@@ -345,3 +345,4 @@ understand_code.py
 slurm*
 *.sh
 *.pth
+*.csv

@@ -396,7 +396,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     "AO_value"
     ]
     print(gaze_inside_ap)
-    data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,ao_meter.avg])
+    print(ao_meter.avg)
+    data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,gaze_inside_ap])
     df = pd.DataFrame(data_list, columns=columns)
     filename = "evaluation_data.csv"
     df.to_csv(filename, header=True, index=False)
@@ -406,7 +407,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
         avg_dist_meter.avg,
         min_ang_error_meter.avg,
         avg_ang_error_meter.avg,
-        ao_meter.avg,
+        gaze_inside_ap,
         wandb_gaze_heatmap_images
     )
 

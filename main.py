@@ -705,7 +705,6 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
     avg_dist_meter = AverageMeter()
     min_ang_error_meter = AverageMeter()
     avg_ang_error_meter = AverageMeter()
-    ao_meter =  AverageMeter()
     ao_heat_map_meter =  AverageMeter()
     gaze_to_save = 4
     previous_sorted_list = []
@@ -714,6 +713,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
     new_gazer_mask = []
     new_gaze_heatmap_pred = []
     new_coordinate_test = []
+    gaze_inside_all = []
+    gaze_inside_pred_all = []
     #
     # original_indices = []
     # loader has size of 150
@@ -781,7 +782,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
 
             # slicing to remove the uneeded stuff from here. 
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
-
+            gaze_inside_all.extend(gaze_inout.cpu().tolist())
+            gaze_inside_pred_all.extend(inout.cpu().tolist())
             # Sets the number of jobs according to batch size and cpu counts. In any case, no less than 1 and more than
             # 8 jobs are allocated.
             n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.Dataset.batch_size))# njobs = 8
@@ -793,10 +795,10 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             )
             # print(gaze_inout.cpu().numpy())
             # print(inout.cpu().numpy())
-            ao = get_ap(gaze_inout.cpu().numpy(),inout.cpu().numpy())
+            # ao = get_ap(gaze_inout.cpu().numpy(),inout.cpu().numpy())
             # print(ao,ao.shape)
             # print(ao.shape)
-            ao_meter.update(ao)
+            # ao_meter.update(ao)
 
             metrics = list(filter(partial(is_not, None),metrics ))
             # len gaze coordinates = 32 which mean that i am looping on the batch size
@@ -861,7 +863,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                     f"\t MIN. DIST. {min_dist_meter.avg:.3f}"
                     f"\t AVG. ANG. ERR. {avg_ang_error_meter.avg:.3f}"
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
-                    f"\t MIN. AO. {ao_meter.avg:.3f}"
+                    f"\t MIN. AO. {get_ap(gaze_inside_all, gaze_inside_pred_all):.3f}"
                     f"\t MIN. HM AO. {ao_heat_map_meter.avg:.3f}"
 
                 )
@@ -873,13 +875,15 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                                                     new_coordinate_test,
                                                     epoch,config.experiment_parameter.Debugging_maps,sorted_list=previous_sorted_list
                                                     )
+    gaze_inside_ap = get_ap(gaze_inside_all, gaze_inside_pred_all)
+
     return (
         auc_meter.avg,
         min_dist_meter.avg,
         avg_dist_meter.avg,
         min_ang_error_meter.avg,
         avg_ang_error_meter.avg,
-        ao_meter.avg,
+        gaze_inside_ap,
         ao_heat_map_meter.avg,
         wandb_gaze_heatmap_images,
     )

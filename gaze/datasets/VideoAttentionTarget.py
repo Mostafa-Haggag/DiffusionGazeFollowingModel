@@ -52,7 +52,7 @@ class VideoAttentionTargetImages(Dataset):
                     names=["path", "xmin", "ymin", "xmax", "ymax", "gazex", "gazey"],
                 )
                 # sampling 20% from the full data set
-                df = df.sample(frac=0.2)
+                df = df.sample(frac=0.2,random_state=42)
 
                 show_name = sequence_path.split("/")[-3]
                 clip = sequence_path.split("/")[-2]

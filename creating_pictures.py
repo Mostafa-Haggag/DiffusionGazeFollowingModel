@@ -268,6 +268,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     min_ang_error_meter = AverageMeter()
     avg_ang_error_meter = AverageMeter()
     ao_meter =  AverageMeter()
+    gaze_inside_all = []
+    gaze_inside_pred_all = []
 
 
     data_list = []
@@ -332,6 +334,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
             )
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
             n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.Dataset.batch_size))# njobs = 8
+            gaze_inside_all.extend(gaze_inout.cpu().tolist())
+            gaze_inside_pred_all.extend(gaze_heatmap_pred.cpu().tolist())
             metrics = Parallel(n_jobs=n_jobs)(
                 delayed(evaluate_one_item)(
                     gaze_heatmap_pred[b_i], eye_coords[b_i], gaze_coords[b_i], img_size[b_i], output_size
@@ -352,7 +356,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     continue
                 ao_index = get_ap(gaze_inout.cpu().numpy()[index],inout.cpu().numpy()[index])
                 auc_score, min_dist, avg_dist, min_ang_err, avg_ang_err,auc_precision_recall = metric
-                new_path.append("../normal_diffusion/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
+                new_path.append("../normal_diffusion_depth/"+str(batch)+"_"+str(index)+"_"+path[index].split("/")[-1])
                 auc_list.append(auc_score)
                 auc_list_extractor.append(index)
 
@@ -370,8 +374,6 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                                                     coordinates_test[auc_list_extractor,:],
                                                     epoch,sliced_list,new_path=new_path
                                                     )
-            if check_img != '':
-                        break
 
             if (batch + 1) % print_every == 0 or (batch + 1) == len(loader):
                 print(
@@ -383,6 +385,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
                     f"\t MIN. AO. {ao_meter.avg:.3f}"
                 )
+    gaze_inside_ap = get_ap(gaze_inside_all, gaze_inside_pred_all)
     columns = [
     "Frame",
     "auc",
@@ -392,6 +395,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     "avg_ang_err",
     "AO_value"
     ]
+    print(gaze_inside_ap)
     data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,ao_meter.avg])
     df = pd.DataFrame(data_list, columns=columns)
     filename = "evaluation_data.csv"

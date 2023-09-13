@@ -267,8 +267,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     avg_dist_meter = AverageMeter()
     min_ang_error_meter = AverageMeter()
     avg_ang_error_meter = AverageMeter()
-    ao_meter =  AverageMeter()
-
+    gaze_inside_all = []
+    gaze_inside_pred_all = []
 
     data_list = []
     with torch.no_grad():# you have more than loader
@@ -331,6 +331,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
 
             )
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
+            gaze_inside_all.extend(gaze_inout.cpu().tolist())
+            gaze_inside_pred_all.extend(inout.cpu().tolist())
             n_jobs = max(1, min(multiprocessing.cpu_count(), 12, config.Dataset.batch_size))# njobs = 8
             metrics = Parallel(n_jobs=n_jobs)(
                 delayed(evaluate_one_item)(
@@ -338,8 +340,6 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                 )
                 for b_i in range(len(gaze_coords))
             )
-            ao = get_ap(gaze_inout.cpu().numpy(),inout.cpu().numpy())
-            ao_meter.update(ao)
 
             # metrics = list(filter(partial(is_not, None),metrics ))
             auc_list =[]
@@ -393,7 +393,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
                     f"\t MIN. DIST. {min_dist_meter.avg:.3f}"
                     f"\t AVG. ANG. ERR. {avg_ang_error_meter.avg:.3f}"
                     f"\t MIN. ANG. ERR. {min_ang_error_meter.avg:.3f}"
-                    f"\t MIN. AO. {ao_meter.avg:.3f}"
+                    f"\t MIN. AO. {get_ap(gaze_inside_all, gaze_inside_pred_all):.3f}"
                 )
     columns = [
     "Frame",
@@ -404,9 +404,10 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
     "avg_ang_err",
     "AO_value"
     ]
-    data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,ao_meter.avg])
+    gaze_inside_ap = get_ap(gaze_inside_all, gaze_inside_pred_all)
+    data_list.append(['evaluation final',auc_meter.avg,min_dist_meter.avg.item(),avg_dist_meter.avg.item(),min_ang_error_meter.avg.item(),avg_ang_error_meter.avg,gaze_inside_ap])
     df = pd.DataFrame(data_list, columns=columns)
-    filename = "evaluation_data.csv"
+    filename = "evaluation_data_point.csv"
     df.to_csv(filename, header=True, index=False)
     return (
         auc_meter.avg,
@@ -414,7 +415,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn,check_img,threshold)
         avg_dist_meter.avg,
         min_ang_error_meter.avg,
         avg_ang_error_meter.avg,
-        ao_meter.avg,
+        gaze_inside_ap,
         wandb_gaze_heatmap_images
     )
 

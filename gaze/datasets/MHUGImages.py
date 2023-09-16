@@ -21,12 +21,12 @@ from utils import get_head_mask, get_label_map
 
 
 class MHUGImages(Dataset):
-    def __init__(self, data_dir, labels_dir,random_size=False,depth_on=False, input_size=224, output_size=64,):
+    def __init__(self, data_dir, labels_dir,random_size=False,depth_on=False, input_size=224, output_size=64,sigma=3):
         self.data_dir = data_dir
         self.input_size = input_size
         self.output_size = output_size
         self.depth_on = depth_on
-
+        self.sigma = sigma
         self.head_bbox_overflow_coeff = 0.1  # Will increase/decrease the bbox of the head by this value (%)
         self.image_transform = transforms.Compose(
             [
@@ -118,7 +118,7 @@ class MHUGImages(Dataset):
             if self.random_size:
                     sigma = random.randint(7, 10)
             else: 
-                    sigma= 3
+                    sigma= self.sigma
             # set the size of the output
             gaze_heatmap = get_label_map(
                 gaze_heatmap, [gaze_x * self.output_size, gaze_y * self.output_size], sigma, pdf="Gaussian"

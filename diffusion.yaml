@@ -56,6 +56,7 @@ experiment_parameter:
   diff_normalization: 0.1
   norm_std_flag: true
   random_flag: true
+  random_sigma: 3
   is_subsample_test_set: false
   Debugging_maps: false
   eval_from_picture: false

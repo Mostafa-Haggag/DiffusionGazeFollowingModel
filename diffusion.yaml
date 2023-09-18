@@ -1,17 +1,17 @@
 Dataset:
-  source_dataset: "videoattentiontarget"
-  source_dataset_dir: "gaze/datasets/video_dataset/"
-  # source_dataset: "gazefollow"
-  # source_dataset_dir: "gaze/datasets/gazefollow_extended/"
+  # source_dataset: "videoattentiontarget"
+  # source_dataset_dir: "gaze/datasets/video_dataset/"
+  source_dataset: "gazefollow"
+  source_dataset_dir: "gaze/datasets/gazefollow_extended/"
   num_workers: 12
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_4_weighted_losses/ckpt_epoch_30.pth"
-  eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/ckpt_epoch_30.pth"
-  # eval_weights : 
+  # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/ckpt_epoch_30.pth"
+  eval_weights : 
   lr: 2.5e-4
-  epochs: 30
-  evaluate_every: 30
+  epochs: 40
+  evaluate_every: 5
   save_every: 5
   print_every: 10
   no_resume: false
@@ -39,6 +39,7 @@ Diffusion:
   list_unet_attention_levels: 
       - 2
       - 4
+      - 8
   unet_spatial_tf_heads: 4
   unet_spatial_tf_layers: 1 
   unet_context_vector: 1024

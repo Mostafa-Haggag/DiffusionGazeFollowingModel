@@ -20,7 +20,7 @@ from utils import get_head_mask, get_label_map
 
 class GazeFollow(Dataset):
     def __init__(self, data_dir, labels_path,random_size=False,depth_on=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
-                 gaze_point_threshold=0):
+                 gaze_point_threshold=0,sigma=3):
         self.data_dir = data_dir
         self.input_size = input_size
         self.output_size = output_size
@@ -28,6 +28,8 @@ class GazeFollow(Dataset):
         self.gaze_point_threshold=gaze_point_threshold
         self.head_bbox_overflow_coeff = 0.1  
         self.depth_on = depth_on
+        self.sigma = sigma
+
         self.image_transform = transforms.Compose(
             [
                 transforms.Resize((input_size, input_size)),
@@ -264,7 +266,7 @@ class GazeFollow(Dataset):
         if self.random_size:
                 sigma = random.randint(7, 10)
         else: 
-            sigma= 8
+            sigma= self.sigma
         gaze_heatmap = get_label_map(
             gaze_heatmap, [gaze_x * self.output_size, gaze_y * self.output_size], sigma, pdf="Gaussian"
         )
@@ -370,7 +372,7 @@ class GazeFollow(Dataset):
             if self.random_size:
                 sigma = random.randint(7, 10)
             else: 
-                sigma= 8
+                sigma= self.sigma
             gaze_heatmap = get_label_map(
                 gaze_heatmap, [gaze_x * self.output_size, gaze_y * self.output_size], sigma, pdf="Gaussian"
             )

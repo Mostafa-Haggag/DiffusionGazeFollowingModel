@@ -136,7 +136,8 @@ def get_ap(label, pred):
 
 
 def get_heatmap_peak_coords(heatmap):
-    heatmap[np.isnan(heatmap)] = 0
+    # heatmap[np.isnan(heatmap)] = 0
+    heatmap[torch.isnan(heatmap)] = 0
 
     idx = np.unravel_index(heatmap.argmax(), heatmap.shape)
     pred_y, pred_x = map(float, idx)

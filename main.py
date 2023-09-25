@@ -496,6 +496,7 @@ def train_one_epoch(
                       'face':s_heads,
                       'masks':s_masks,
                       'noise_strength':config.experiment_parameter.offset_noise_strength,
+                      'sigma':config.experiment_parameter.random_sigma,
                       'depth':s_depth
                       }
         else:
@@ -503,6 +504,7 @@ def train_one_epoch(
                 'face':s_heads,
                 'masks':s_masks,
                 'noise_strength':config.experiment_parameter.offset_noise_strength,
+                'sigma':config.experiment_parameter.random_sigma,
                 }
         # return from the model
         # you didnot normalize here at all 
@@ -773,7 +775,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             (images_copy.shape[0], 1, 64, 64),
             model_kwargs=micro_cond,
             clip_denoised=True,
-            progress=True
+            progress=True,
+            sigma_hm=config.experiment_parameter.random_sigma
             )
             # print(gaze_heatmap_pred.shape)
             # gaze_heatmap_pred = model.sample(images,masks,faces,gazer_mask,config.eval_from_picture,config.time_noise,images.shape[0])

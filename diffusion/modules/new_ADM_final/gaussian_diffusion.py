@@ -559,7 +559,8 @@ class GaussianDiffusion:
         x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
         ## generate heatmaps
-        sigma = 8
+        sigma = model_kwargs['sigma']
+        del model_kwargs['sigma']
 
         my_list = []
         for gaze_x, gaze_y in x_t:
@@ -569,7 +570,6 @@ class GaussianDiffusion:
             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
             )
             my_list.append(gaze_heatmap)
-            # print(gaze_heatmap.shape)
         
         x_t_final=th.stack(my_list,0)
         x_t_final=x_t_final.unsqueeze(1)
@@ -894,6 +894,7 @@ class GaussianDiffusion:
         cond_fn=None,
         model_kwargs=None,
         eta=0.0,
+        sigma_hm=8
         
     ):
         """
@@ -905,13 +906,12 @@ class GaussianDiffusion:
             x = th.randn((t.shape[0],2), device=t.device)
             noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
             noise = self.unnormalize(noise,self.normalization_value)
-            sigma = 8
             my_list = []
             for gaze_x, gaze_y in noise:
                 gaze_heatmap_i = th.zeros(64, 64)
 
                 gaze_heatmap = get_label_map_1(
-                gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+                gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma_hm, pdf="Gaussian"
                 )
                 my_list.append(gaze_heatmap)            
             x_hm=th.stack(my_list,0)
@@ -922,13 +922,12 @@ class GaussianDiffusion:
 
             x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
             x_point = self.unnormalize(x_point,self.normalization_value)
-            sigma = 8
             my_list = []
             for gaze_x, gaze_y in x_point:
                 gaze_heatmap_i = th.zeros(64, 64)
 
                 gaze_heatmap = get_label_map_1(
-                gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
+                gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma_hm, pdf="Gaussian"
                 )
                 my_list.append(gaze_heatmap)            
             x_hm=th.stack(my_list,0)
@@ -1102,6 +1101,7 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
+        sigma_hm=8
     ):
         """
         Generate samples from the model using DDIM.
@@ -1120,6 +1120,7 @@ class GaussianDiffusion:
             device=device,
             progress=progress,
             eta=eta,
+            sigma_hm=sigma_hm
         ):
             final = sample
         return th.clamp(final["sample"],0,1),final["inout"]
@@ -1136,6 +1137,7 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
+        sigma_hm=8
     ):
         """
         Use DDIM to sample from the model and yield intermediate samples from
@@ -1174,6 +1176,7 @@ class GaussianDiffusion:
                     cond_fn=cond_fn,
                     model_kwargs=model_kwargs,
                     eta=eta,
+                    sigma_hm=sigma_hm
                 )
                 yield out
                 img = out["sample"]

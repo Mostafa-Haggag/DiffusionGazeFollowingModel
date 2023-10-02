@@ -572,8 +572,8 @@ def train_one_epoch(
                         "epoch": epoch + 1,
                         "train/batch": batch,
                         "train/KL_loss": the_kl_loss.item(),
-                        "train/outputloss": s_rec_loss.item(),
-                        "train/loss": total_loss.item(),
+                        "train/diffusion_loss": s_rec_loss.item(),
+                        "train/total_loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
                         "lr_resnet":optimizer.param_groups[1]['lr'],
                         }
@@ -582,8 +582,8 @@ def train_one_epoch(
                         "epoch": epoch + 1,
                         "train/batch": batch,
                         "train/point_loss": output_loss.item(),
-                        "train/outputloss": s_rec_loss.item(),
-                        "train/loss": total_loss.item(),
+                        "train/diffusion_loss": s_rec_loss.item(),
+                        "train/total_loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
                         "lr_resnet":optimizer.param_groups[1]['lr'],
                         }
@@ -592,9 +592,9 @@ def train_one_epoch(
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
-                        "train/outputloss": s_rec_loss.item(),
-                        "train/Xent_loss": Xent_loss.item(),
-                        "train/loss": total_loss.item(),
+                        "train/diffusion_loss": s_rec_loss.item(),
+                        "train/in_out_loss": Xent_loss.item(),
+                        "train/total_loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
                         "lr_resnet":optimizer.param_groups[1]['lr'],
                         }
@@ -602,9 +602,8 @@ def train_one_epoch(
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
-                        # "train/convloss": f_rec_loss.item(),
-                        "train/outputloss": s_rec_loss.item(),
-                        "train/loss": total_loss.item(),
+                        "train/diffusion_loss": s_rec_loss.item(),
+                        "train/total_loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
                         "lr_resnet":optimizer.param_groups[1]['lr'],
                         }
@@ -677,7 +676,7 @@ def validate_images(image,gazemap_gn,gazemap_pred,vector,epoch,debug=False,sorte
                                 (image[idx].shape[1] ,image[idx].shape[2] ),  # [h, w]
                             )
             img = ax_heatmap_pred.imshow(
-                            gaze_heatmap_predicted, cmap="jet", alpha=0.3,vmin=0, vmax=1)
+                            gaze_heatmap_predicted, cmap="jet", alpha=0.3,vmin=0)
             divider = make_axes_locatable(ax_heatmap_pred)
             cax = divider.append_axes("right", size="3%", pad=0.05)
             plt.colorbar(img, cax=cax)

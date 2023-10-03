@@ -99,7 +99,50 @@ def q_sample( x_start, t,sqrt_alphas_cumprod,sqrt_one_minus_alphas_cumprod ,nois
             extract(sqrt_alphas_cumprod, t, x_start.shape) * x_start +
             extract(sqrt_one_minus_alphas_cumprod, t, x_start.shape) * noise
         ) # caluclating the varianceeeeee *noise +mean *x0 = posterioier .
-        
+# def wrap_clamp_tensor(input_tensor, min_val, max_val):
+#     """
+#     Clamp a PyTorch tensor to the range [min_val, max_val] by wrapping it around.
+    
+#     Args:
+#     input_tensor (torch.Tensor): The input tensor to be clamped.
+#     min_val (float): The minimum value of the desired range.
+#     max_val (float): The maximum value of the desired range.
+    
+#     Returns:
+#     torch.Tensor: The clamped tensor within the specified range.
+#     """
+#     print(input_tensor.shape)
+#     if (input_tensor> min_val) and (input_tensor< max_val):
+#         range_size = max_val - min_val
+#         return min_val + ((input_tensor - min_val) % range_size)
+#     else:
+#         return input_tensor
+def wrap_clamp_tensor(input_tensor, min_val, max_val):
+    """
+    Clamp a PyTorch tensor along the first dimension to the range [min_val, max_val] by wrapping it around.
+    
+    Args:
+    input_tensor (torch.Tensor): The input tensor to be clamped.
+    min_val (float): The minimum value of the desired range.
+    max_val (float): The maximum value of the desired range.
+    
+    Returns:
+    torch.Tensor: The clamped tensor within the specified range.
+    """
+    
+    # Create a condition for values outside the range
+    lower_bound_condition = input_tensor < min_val
+    upper_bound_condition = input_tensor > max_val
+
+    # Calculate range size
+    range_size = max_val - min_val
+
+    # Apply clamping element-wise
+    clamped_tensor = input_tensor.clone()
+    clamped_tensor[lower_bound_condition] = min_val + ((input_tensor[lower_bound_condition] - min_val) % range_size)
+    clamped_tensor[upper_bound_condition] = min_val + ((input_tensor[upper_bound_condition] - min_val) % range_size)
+    
+    return clamped_tensor
 from utils import get_head_mask, get_label_map
 
 def plottings(schedular_name,step):
@@ -130,7 +173,7 @@ def plottings(schedular_name,step):
     print(t)
     plotting_data = []
     normal_range=11
-    myvalue= np.arange(.1, 1.2, 0.1).tolist()
+    myvalue= np.arange(1.0, 12.0, 1.0).tolist()
     for i in range(normal_range):
         # print(data[5][2].squeeze().shape)
         heatmap_new = normalize_to_neg_value_to_value(data[5][2].squeeze(),myvalue[i])
@@ -147,7 +190,9 @@ def plottings(schedular_name,step):
         # print(x.shape)
         x  = x / x.std(axis=(1), keepdims=True) 
         # print(x)
-        x = torch.clamp(x, min=-1 * myvalue[i], max=myvalue[i])
+        # x = torch.clamp(x, min=-1 * myvalue[i], max=myvalue[i])
+        x = wrap_clamp_tensor(x, -1*myvalue[i], myvalue[i])
+
         # print(x)
         x = unnormalize_to_neg_value_to_value(x,myvalue[i])
         # print(x)
@@ -215,4 +260,4 @@ if __name__ == "__main__":
     np.random.seed(1)
     timesteps = 1000
     betas = linear_beta_schedule(timesteps)
-    plottings('cosine',32)
+    plottings('linear',32)

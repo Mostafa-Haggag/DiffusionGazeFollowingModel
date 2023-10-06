@@ -19,8 +19,8 @@ from gaze.datasets.transforms.ToColorMap import ToColorMap
 from utils import get_head_mask, get_label_map
 
 class GazeFollow(Dataset):
-    def __init__(self, data_dir, labels_path,random_size=False,depth_on=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
-                 gaze_point_threshold=0,sigma=3):
+    def __init__(self, data_dir, labels_path,sigma,random_size=False,depth_on=False, x_loss=False,input_size=224, output_size=64, is_test_set=False,is_subsample_test_set=True,
+                 gaze_point_threshold=0,):
         self.data_dir = data_dir
         self.input_size = input_size
         self.output_size = output_size

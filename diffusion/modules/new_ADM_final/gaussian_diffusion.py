@@ -915,12 +915,12 @@ class GaussianDiffusion:
         model,
         x,
         t,
+        sigma_hm,
         clip_denoised=True,
         denoised_fn=None,
         cond_fn=None,
         model_kwargs=None,
         eta=0.0,
-        sigma_hm=8
         
     ):
         """
@@ -1124,6 +1124,7 @@ class GaussianDiffusion:
         self,
         model,
         shape,
+        sigma_hm,
         noise=None,
         clip_denoised=True,
         denoised_fn=None,
@@ -1132,7 +1133,6 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        sigma_hm=8
     ):
         """
         Generate samples from the model using DDIM.
@@ -1160,6 +1160,7 @@ class GaussianDiffusion:
         self,
         model,
         shape,
+        sigma_hm,
         noise=None,
         clip_denoised=True,
         denoised_fn=None,
@@ -1168,7 +1169,6 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        sigma_hm=8
     ):
         """
         Use DDIM to sample from the model and yield intermediate samples from

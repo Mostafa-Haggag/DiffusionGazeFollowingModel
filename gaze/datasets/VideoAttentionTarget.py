@@ -21,7 +21,7 @@ from utils import get_head_mask, get_label_map
 
 
 class VideoAttentionTargetImages(Dataset):
-    def __init__(self, data_dir, labels_dir,random_size=False,depth_on=False, input_size=224, output_size=64, is_test_set=False,sigma=3):
+    def __init__(self, data_dir, labels_dir,sigma,random_size=False,depth_on=False, input_size=224, output_size=64, is_test_set=False):
         self.data_dir = data_dir
         self.input_size = input_size
         self.output_size = output_size

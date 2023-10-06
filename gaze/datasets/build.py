@@ -7,7 +7,7 @@ from .VideoAttentionTarget import VideoAttentionTargetImages
 from .MHUGImages import MHUGImages
 
 
-def get_loader(name: str, root_dir: str, random_flag=False,depth_on=False,x_loss=False,input_size=224, output_size=64, batch_size=48, num_workers=6, is_train=True,is_subsample_test_set=True,gaze_point_threshold=0,sigma=3):
+def get_loader(name: str, root_dir: str,sigma, random_flag=False,depth_on=False,x_loss=False,input_size=224, output_size=64, batch_size=48, num_workers=6, is_train=True,is_subsample_test_set=True,gaze_point_threshold=0):
     if name == "gazefollow":# we enter into here
         labels = os.path.join(root_dir, "train_annotations_release.txt" if is_train else "test_annotations_release.txt")
         # root_dir datasets/gazefollow_extended

@@ -17,7 +17,32 @@ from .nn import mean_flat
 from .losses import normal_kl, discretized_gaussian_log_likelihood,softargmax2d,calculate_kl_divergence
 from einops import rearrange
 from utils import get_label_map_1,batch_argmax
+def wrap_clamp_tensor(input_tensor, min_val, max_val):
+    """
+    Clamp a PyTorch tensor along the first dimension to the range [min_val, max_val] by wrapping it around.
+    
+    Args:
+    input_tensor (torch.Tensor): The input tensor to be clamped.
+    min_val (float): The minimum value of the desired range.
+    max_val (float): The maximum value of the desired range.
+    
+    Returns:
+    torch.Tensor: The clamped tensor within the specified range.
+    """
+    
+    # Create a condition for values outside the range
+    lower_bound_condition = input_tensor <= min_val
+    upper_bound_condition = input_tensor >= max_val
 
+    # Calculate range size
+    range_size = max_val - min_val
+
+    # Apply clamping element-wise
+    clamped_tensor = input_tensor.clone()
+    clamped_tensor[lower_bound_condition] = min_val + ((input_tensor[lower_bound_condition] - min_val) % range_size)
+    clamped_tensor[upper_bound_condition] = min_val + ((input_tensor[upper_bound_condition] - min_val) % range_size)
+    
+    return clamped_tensor
 def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
     """
     Get a pre-defined beta schedule for the given name.
@@ -555,7 +580,8 @@ class GaussianDiffusion:
         # print("x-start max after",th.max(x_start.view(16,-1),1)[0])
         x_t = self.q_sample(x_point, t, noise=noise)
         x_t  = x_t / x_t.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x_t
-        x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
+        x_t = wrap_clamp_tensor(x_t,-1 * self.normalization_value,self.normalization_value)
+        # x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
         x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
         ## generate heatmaps
@@ -904,7 +930,8 @@ class GaussianDiffusion:
         """
         if t[0] ==999:
             x = th.randn((t.shape[0],2), device=t.device)
-            noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
+            # noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
+            noise = wrap_clamp_tensor(x,-1 * self.normalization_value,self.normalization_value)
             noise = self.unnormalize(noise,self.normalization_value)
             my_list = []
             for gaze_x, gaze_y in noise:
@@ -920,7 +947,9 @@ class GaussianDiffusion:
             # x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
             x_point  = x / x.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x
 
-            x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
+            # x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
+            x_point = wrap_clamp_tensor(x_point,-1 * self.normalization_value,self.normalization_value)
+
             x_point = self.unnormalize(x_point,self.normalization_value)
             my_list = []
             for gaze_x, gaze_y in x_point:
@@ -951,7 +980,9 @@ class GaussianDiffusion:
         # new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = self.normalize(new_out,self.normalization_value)
-        new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
+        # new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
+        new_out = wrap_clamp_tensor(new_out,-1 * self.normalization_value,self.normalization_value)
+
         # new_x = self.normalize(new_x,self.normalization_value)
         # new_x = th.clamp(new_x, min=-1 * self.normalization_value, max=self.normalization_value)   
         if t[0]<0:

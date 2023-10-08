@@ -55,6 +55,8 @@ Diffusion:
   adm_rescale_learned_sigmas: false
   adm_learn_sigma: false
   adm_attention_module: false
+  conv_resample: true
+  resblock_updown: false
 experiment_parameter:
   diff_normalization: 3
   norm_std_flag: true

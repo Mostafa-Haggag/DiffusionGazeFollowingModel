@@ -43,6 +43,9 @@ def get_model(config,device=torch.device("cuda")):
 
     total_params = sum(p.numel() for p in model.parameters())
     total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("Number of parameters for Backbone",sum(p.numel() for p in model.gaze_model.scene_backbone.parameters() if p.requires_grad))
+    print("Number of parameters for Unet",sum(p.numel() for p in model.model.parameters() if p.requires_grad))
+    print("Number of parameters for Inout module",sum(p.numel() for p in model.sequential.parameters() if p.requires_grad))
 
     print(f"Total params: {total_params}")
     print(f"Total trainable params: {total_trainable_params}")

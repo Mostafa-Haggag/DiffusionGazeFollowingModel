@@ -6,13 +6,14 @@ Dataset:
   num_workers: 12
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
+  # init_weights : "output/spatial_depth_late_fusion_gazefollow/diffusion_siga_8_norm_3_new_clamping/ckpt_last.pth"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_4_weighted_losses/ckpt_epoch_30.pth"
-  # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/ckpt_epoch_30.pth"
+  # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_8_fine_tuneing/ckpt_epoch_60.pth"
   eval_weights : 
   lr: 2.5e-4
-  epochs: 60
-  evaluate_every: 5
-  save_every: 5
+  epochs: 10
+  evaluate_every: 1
+  save_every: 1
   print_every: 10
   no_resume: false
   output_dir: "output"
@@ -47,6 +48,8 @@ Diffusion:
   train_time_steps: 1000
   sample_time_steps: 250
   unet_dropout: 0.0
+  inout_weight: 100
+  diffuion_weight: 100000
   adm: false
   adm_predict_xstart: true
   adm_predict_v: false
@@ -54,7 +57,6 @@ Diffusion:
   adm_rescale_timesteps: false
   adm_rescale_learned_sigmas: false
   adm_learn_sigma: false
-  adm_attention_module: false
   conv_resample: true
   resblock_updown: false
 experiment_parameter:

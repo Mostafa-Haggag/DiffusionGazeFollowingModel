@@ -115,8 +115,9 @@ def main(config,config_1):
         pretrained_dict = pretrained_dict_org.get("model_state_dict") or pretrained_dict_org.get("model")
         # you have dictionary with everything in the model
         run_id = pretrained_dict_org.get("run_id")
-        epoch  = pretrained_dict_org.get("epoch") 
-
+        epoch  = pretrained_dict_org.get("epoch")
+        print(f"We are evaluating run_id: {run_id}") 
+        print(f"We are evaluating epoch: {epoch}")
         # ema_params = copy.deepcopy(list(model.parameters()))
         # this line of code doesnot make any sense we could remove it
         # ema_params = [pretrained_dict_org.get("ema_params")[name] for name, _ in model.named_parameters()]
@@ -177,14 +178,14 @@ def main(config,config_1):
                 wandb.watch(model,log="gradients", log_freq=1000)
                 wandb.log(
                     {
-                            "epoch": epoch + 1,
+                            "epoch": epoch ,
                             "val/auc": auc,
                             "val/min_dist": min_dist,
                             "val/avg_dist": avg_dist,
                             "val/min_ang_err": min_ang_err,
                             "val/avg_ang_err": avg_ang_err,
                             "val/avg_ao": avg_ao,
-                            "video/avg_hm_ao": avg_heatmpap_ao,
+                            "val/avg_hm_ao": avg_heatmpap_ao,
                             "val/images":wandb_gaze_heatmap_images,
                     }
                     )
@@ -541,7 +542,7 @@ def train_one_epoch(
                 total_loss = 100000*s_rec_loss + 10000*output_loss
         else:
             if config.losses_parameters.x_loss:
-                total_loss = 100000*s_rec_loss + 100*Xent_loss
+                total_loss = config.Diffusion.diffuion_weight*s_rec_loss + config.Diffusion.inout_weight*Xent_loss
             else:
                 total_loss = s_rec_loss 
 
@@ -592,8 +593,8 @@ def train_one_epoch(
                         log = {
                         "epoch": epoch + 1,
                         "train/batch": batch,
-                        "train/diffusion_loss": s_rec_loss.item(),
-                        "train/in_out_loss": Xent_loss.item(),
+                        "train/diffusion_loss": config.Diffusion.diffuion_weight * s_rec_loss.item(),
+                        "train/in_out_loss": config.Diffusion.inout_weight * Xent_loss.item(),
                         "train/total_loss": total_loss.item(),
                         "lr_dm":optimizer.param_groups[0]['lr'],
                         "lr_resnet":optimizer.param_groups[1]['lr'],
@@ -775,7 +776,8 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             model_kwargs=micro_cond,
             clip_denoised=True,
             progress=True,
-            sigma_hm=config.experiment_parameter.random_sigma
+            sigma_hm=config.experiment_parameter.random_sigma,
+            eta=0
             )
             # print(gaze_heatmap_pred.shape)
             # gaze_heatmap_pred = model.sample(images,masks,faces,gazer_mask,config.eval_from_picture,config.time_noise,images.shape[0])

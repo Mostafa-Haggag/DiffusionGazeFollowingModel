@@ -11,9 +11,9 @@ Dataset:
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_8_fine_tuneing/ckpt_epoch_60.pth"
   eval_weights : 
   lr: 2.5e-4
-  epochs: 10
-  evaluate_every: 1
-  save_every: 1
+  epochs: 60
+  evaluate_every: 5
+  save_every: 5
   print_every: 10
   no_resume: false
   output_dir: "output"

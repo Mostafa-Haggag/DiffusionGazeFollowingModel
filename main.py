@@ -42,7 +42,7 @@ from config import get_config
 from gaze.datasets import get_dataset
 from diffusion import get_model, load_pretrained
 from optimizer import get_optimizer
-from schedular import LinearWarmupCosineAnnealingLR
+from schedular import LinearWarmupCosineAnnealingLR,LinearWarmup
 from diffusion.modules.new_ADM_final.script_util import create_gaussian_diffusion
 from diffusion.modules.new_ADM_final.resample import create_named_schedule_sampler
 from diffusion.modules.new_ADM_final.nn import update_ema
@@ -100,6 +100,7 @@ def main(config,config_1):
                 mse_loss_weight_type=config_1.losses_parameters.mse_loss_weight_type,
                 predict_v=config_1.Diffusion.adm_predict_v,
                 enforce_snr=config_1.experiment_parameter.fix_snr,
+                factor_multiplier=config_1.experiment_parameter.factor_multiplier,
                 )
     schedule_sampler = create_named_schedule_sampler('uniform', diffusion)# the weights of everything
     is_ddim_sampling = config_1.Diffusion.sample_time_steps < config_1.Diffusion.train_time_steps
@@ -151,6 +152,13 @@ def main(config,config_1):
                                                 target_test_loader,
                                                 sample_fn
                                                 ) 
+        # Print summary
+        print("\nEval summary")
+        print(f"AUC: {auc:.3f}")
+        print(f"Minimum distance: {min_dist:.3f}")
+        print(f"Average distance: {avg_dist:.3f}")
+        print(f"Minimum angular error: {min_ang_err:.3f}")
+        print(f"Average angular error: {avg_ang_err:.3f}")
         if run_id is not None and config.wandb:
             print(f"Resuming wandb run with id {run_id}")
             if config_1.Dataset.source_dataset=="videoattentiontarget":
@@ -160,7 +168,7 @@ def main(config,config_1):
                 wandb.watch(model,log="gradients", log_freq=1000)
                 wandb.log(
                             {
-                                "epoch": epoch,
+                                "epoch": epoch+1,
                                 "video/auc": auc,
                                 "video/min_dist": min_dist,
                                 "video/avg_dist": avg_dist,
@@ -178,7 +186,7 @@ def main(config,config_1):
                 wandb.watch(model,log="gradients", log_freq=1000)
                 wandb.log(
                     {
-                            "epoch": epoch ,
+                            "epoch": epoch+1 ,
                             "val/auc": auc,
                             "val/min_dist": min_dist,
                             "val/avg_dist": avg_dist,
@@ -189,13 +197,6 @@ def main(config,config_1):
                             "val/images":wandb_gaze_heatmap_images,
                     }
                     )
-        # Print summary
-        print("\nEval summary")
-        print(f"AUC: {auc:.3f}")
-        print(f"Minimum distance: {min_dist:.3f}")
-        print(f"Average distance: {avg_dist:.3f}")
-        print(f"Minimum angular error: {min_ang_err:.3f}")
-        print(f"Average angular error: {avg_ang_err:.3f}")
     else:
         print("Preparing training")
 
@@ -240,7 +241,10 @@ def main(config,config_1):
                 optimizer.zero_grad()
                 #
                 if config_1.experiment_parameter.lr_schedular:
-                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    if config_1.experiment_parameter.warmup_linear:
+                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    else:
+                        scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
                     scheduler.load_state_dict(checkpoint["scheduler"])
                 optimizer.load_state_dict(checkpoint["optimizer"])# loading the state of the optimizer
                 next_epoch = checkpoint["epoch"] + 1
@@ -269,7 +273,10 @@ def main(config,config_1):
                                     )
             ema_params = copy.deepcopy(list(model.parameters()))
             if config_1.experiment_parameter.lr_schedular:
-                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    if config_1.experiment_parameter.warmup_linear:
+                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    else:
+                        scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
             # # Get optimizer
             optimizer.zero_grad()
             del pretrained_dict
@@ -287,7 +294,10 @@ def main(config,config_1):
             ema_params = copy.deepcopy(list(model.parameters()))
             optimizer.zero_grad()
             if config_1.experiment_parameter.lr_schedular:
-                    scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    if config_1.experiment_parameter.warmup_linear:
+                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                    else:
+                        scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
         # turning it on fucks everything
         # print(len(optimizer.param_groups))
 

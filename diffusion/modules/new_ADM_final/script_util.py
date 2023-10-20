@@ -21,8 +21,9 @@ def create_gaussian_diffusion(
     mse_loss_weight_type='constant',
     predict_v=False,
     enforce_snr=False,
+    factor_multiplier=10
 ):
-    betas = gd.get_named_beta_schedule(noise_schedule, steps)
+    betas = gd.get_named_beta_schedule(noise_schedule, steps,factor_multiplier = factor_multiplier )
     if use_kl:
         # loss_type = gd.LossType.RESCALED_KL
         loss_type = gd.LossType.KL

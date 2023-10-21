@@ -69,8 +69,8 @@ experiment_parameter:
   Debugging_maps: false
   eval_from_picture: false
   clip_denoised: false
-  lr_schedular: false
-  warmup_linear: false
+  lr_schedular: true
+  warmup_linear: true
   fix_snr : false
   offset_noise_strength: 0.1
   noise_changer: false

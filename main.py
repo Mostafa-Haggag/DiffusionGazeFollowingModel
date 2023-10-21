@@ -42,7 +42,7 @@ from config import get_config
 from gaze.datasets import get_dataset
 from diffusion import get_model, load_pretrained
 from optimizer import get_optimizer
-from schedular import LinearWarmupCosineAnnealingLR,LinearWarmup
+from schedular import LinearWarmupCosineAnnealingLR,ConstantLRWithWarmup
 from diffusion.modules.new_ADM_final.script_util import create_gaussian_diffusion
 from diffusion.modules.new_ADM_final.resample import create_named_schedule_sampler
 from diffusion.modules.new_ADM_final.nn import update_ema
@@ -242,7 +242,7 @@ def main(config,config_1):
                 #
                 if config_1.experiment_parameter.lr_schedular:
                     if config_1.experiment_parameter.warmup_linear:
-                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                        scheduler = ConstantLRWithWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1),verbose=True)
                     else:
                         scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
                     scheduler.load_state_dict(checkpoint["scheduler"])
@@ -274,7 +274,7 @@ def main(config,config_1):
             ema_params = copy.deepcopy(list(model.parameters()))
             if config_1.experiment_parameter.lr_schedular:
                     if config_1.experiment_parameter.warmup_linear:
-                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                        scheduler = ConstantLRWithWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1),verbose=True)
                     else:
                         scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
             # # Get optimizer
@@ -295,7 +295,7 @@ def main(config,config_1):
             optimizer.zero_grad()
             if config_1.experiment_parameter.lr_schedular:
                     if config_1.experiment_parameter.warmup_linear:
-                        scheduler = LinearWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
+                        scheduler = ConstantLRWithWarmup(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1),verbose=True)
                     else:
                         scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
         # turning it on fucks everything

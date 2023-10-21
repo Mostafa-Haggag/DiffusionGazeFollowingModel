@@ -34,7 +34,46 @@ class LinearWarmup(_LRScheduler):
                 (self.warmup_epochs - 1),self.base_lrs[1]]
         return self.base_lrs
 
+    def _get_closed_form_lr(self) -> List[float]:
+        """Called when epoch is passed as a param to the `step` function of the scheduler."""
+        if self.last_epoch < self.warmup_epochs:
+            return [self.warmup_start_lr + self.last_epoch *
+                (self.base_lrs[0] - self.warmup_start_lr) / (self.warmup_epochs - 1),self.base_lrs[1]] 
+        self.base_lrs
+            
+class ConstantLRWithWarmup(_LRScheduler):
+    """Implements a constant learning rate schedule with an optional exponential
+    warmup. When last_epoch=-1, sets initial lr as lr.
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        warmup (float): Exponential warmup factor (0 <= warmup < 1, 0 to disable)
+            Default: 0.
+        last_epoch (int): The index of last epoch. Default: -1.
+        verbose (bool): If ``True``, prints a message to stdout for
+            each update. Default: ``False``.
+    """
 
+    def __init__(self, optimizer, warmup_epochs=0, last_epoch=-1, verbose=False):
+        if warmup_epochs < 0:
+            raise ValueError('Invalid value for warmup')
+        self.warmup_epochs = warmup_epochs
+        super().__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        if not self._get_lr_called_within_step:
+            warnings.warn("To get the last learning rate computed by the scheduler, "
+                          "please use `get_last_lr()`.")
+
+        return self._get_closed_form_lr()
+
+    def _get_closed_form_lr(self):
+        if self.last_epoch < self.warmup_epochs:
+            if self.last_epoch == 0:
+                return [0,self.base_lrs[1]]
+            else:
+                return [0.0 + (self.last_epoch / self.warmup_epochs) * self.base_lrs[0],self.base_lrs[1]]
+        else:
+            return self.base_lrs
 
 
 #################################################################

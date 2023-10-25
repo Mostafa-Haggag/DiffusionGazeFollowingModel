@@ -11,7 +11,9 @@ def get_model(config,device=torch.device("cuda")):
                                         resnet_depth_inplanes=config.Gaze.resnet_depth_inplanes,
                                         attention_module=config.Gaze.adm_attention_module,
                                         unet_context_vector=config.Diffusion.unet_context_vector,
-                                        depth_flag=config.Gaze.depth_flag
+                                        depth_flag=config.Gaze.depth_flag,
+                                        head_flag= config.Gaze.head_flag
+
                 )
     model = SpatialDepthLateFusion_2(
             gaze_model=gaze_model,

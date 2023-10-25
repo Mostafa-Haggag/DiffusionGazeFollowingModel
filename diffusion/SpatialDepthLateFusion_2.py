@@ -24,7 +24,8 @@ class SpatialDepthLateFusion_2(nn.Module):
     ):
         super(SpatialDepthLateFusion_2, self).__init__()
         self.gaze_model = gaze_model
-
+        value =2048 if gaze_model.head_flag else 1024
+        print(gaze_model.head_flag)
         self.model = UNetModel(in_channels=unet_inout_channels,
                          out_channels=(unet_inout_channels if not learn_sigma else 2*unet_inout_channels),
                          model_channels=unet_inplanes,
@@ -39,7 +40,7 @@ class SpatialDepthLateFusion_2(nn.Module):
                          resblock_updown=resblock_updown)   
         self.channels=unet_inout_channels
         self.unet_context_vector=unet_context_vector
-        self.sequential = nn.Sequential(    nn.Conv2d(2048, 512, kernel_size=1, stride=1, padding=0, bias=False),
+        self.sequential = nn.Sequential(    nn.Conv2d(value, 512, kernel_size=1, stride=1, padding=0, bias=False),
                                             nn.BatchNorm2d(512),
                                             nn.ReLU(inplace=True),
                                             nn.Conv2d(512, 1, kernel_size=1, stride=1, padding=0, bias=False),

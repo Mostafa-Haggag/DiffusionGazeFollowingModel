@@ -90,13 +90,15 @@ class gaze_net_module(nn.Module):
         resnet_depth_inplanes=64,
         attention_module=False,
         unet_context_vector=1024,
-        depth_flag=False
+        depth_flag=False,
+        head_flag= True
         ):
             super(gaze_net_module, self).__init__()
             self.avgpool = nn.AvgPool2d(7, stride=1)
             self.scene_backbone = ResNet(in_channels=4, layers=resnet_scene_layers, inplanes=resnet_scene_inplanes)
             self.face_backbone = ResNet(in_channels=3, layers=resnet_face_layers, inplanes=resnet_face_inplanes)
             self.depth_flag=depth_flag
+            self.head_flag = head_flag
             if self.depth_flag:
                 self.depth_backbone = ResNet(in_channels=4, layers=resnet_depth_layers, inplanes=resnet_depth_inplanes)
                 # Encoding for scene saliency
@@ -121,6 +123,13 @@ class gaze_net_module(nn.Module):
 
                     # Depth encoding
                     conditioning = torch.concat([scene_encoding.permute(0,2,3,1).view(-1, 49,self.unet_context_vector),face_feat.permute(0,2,3,1).view(-1, 49,self.unet_context_vector)],1)
+            elif self.head_flag == False:
+                    images = torch.cat((images, masks), dim=1)
+                    scene_feat = self.scene_backbone(images)
+                    scene_feat_reduced   = scene_feat.permute(0,2,3,1).view(-1, 49,self.unet_context_vector)
+                    # important stuff to add in here 
+                    scene_face_feat = scene_feat
+                    conditioning = scene_feat_reduced
             else:
                     images = torch.cat((images, masks), dim=1)
                     if not self.attention_module:

@@ -46,7 +46,7 @@ Diffusion:
   unet_context_vector: 1024
   watch_wandb: false
   train_time_steps: 1000
-  sample_time_steps: 250
+  sample_time_steps: 50
   unet_dropout: 0.0
   inout_weight: 100
   diffuion_weight: 100000

@@ -1,17 +1,19 @@
 Dataset:
-  source_dataset: "videoattentiontarget"
-  source_dataset_dir: "gaze/datasets/video_dataset"
+  # source_dataset: "videoattentiontarget"
+  # source_dataset_dir: "gaze/datasets/video_dataset"
   # source_dataset: "mhug"
   # source_dataset_dir: "gaze/datasets/mhug"
+  source_dataset: "gazefollow"
+  source_dataset_dir: "gaze/datasets/gazefollow_extended"
   num_workers: 8
   gaze_point_threshold : 0
   init_weights : "pretrained/init_weights.pt"
-  eval_weights : "/media/mostafahaggag/Shared_Drive/evaluating/ckpt_epoch_30_nodepth_bce_on.pth"
-  # eval_weights : 
+  # eval_weights : "/media/mostafahaggag/Shared_Drive/evaluating/ckpt_epoch_30_nodepth_bce_on.pth"
+  eval_weights : 
   lr: 2.5e-4
-  epochs: 30
-  evaluate_every: 30
-  save_every: 1
+  epochs: 60
+  evaluate_every: 5
+  save_every: 5
   print_every: 10
   no_resume: false
   output_dir: "output"
@@ -37,13 +39,16 @@ Diffusion:
   list_unet_attention_levels: 
       - 2
       - 4
+      - 8
   unet_spatial_tf_heads: 4
   unet_spatial_tf_layers: 1 
   unet_context_vector: 1024
   watch_wandb: true
   train_time_steps: 1000
-  sample_time_steps: 250
+  sample_time_steps: 50
   unet_dropout: 0.0
+  inout_weight: 100
+  diffuion_weight: 100000
   adm: false
   adm_predict_xstart: true
   adm_predict_v: false
@@ -53,7 +58,7 @@ Diffusion:
   adm_learn_sigma: false
   adm_attention_module: false
   conv_resample: true
-  resblock_updown: true
+  resblock_updown: false
 experiment_parameter:
   diff_normalization: 0.1
   norm_std_flag: true
@@ -63,7 +68,7 @@ experiment_parameter:
   Debugging_maps: false
   eval_from_picture: false
   clip_denoised: false
-  lr_schedular: true
+  lr_schedular: false
   fix_snr : false
   offset_noise_strength: 0.1
   noise_changer: false

@@ -346,3 +346,4 @@ slurm*
 *.sh
 *.pth
 *.csv
+codes_diagram/*

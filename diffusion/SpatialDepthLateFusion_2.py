@@ -19,7 +19,8 @@ class SpatialDepthLateFusion_2(nn.Module):
         dropout=0.0,
         depth_flag=False,
         conv_resample=True,
-        resblock_updown=False
+        resblock_updown=False,
+        use_scale_shift_norm=False,
         
     ):
         super(SpatialDepthLateFusion_2, self).__init__()
@@ -37,7 +38,8 @@ class SpatialDepthLateFusion_2(nn.Module):
                          context_dim=unet_context_vector,
                          dropout=dropout,
                          conv_resample=conv_resample,
-                         resblock_updown=resblock_updown)   
+                         resblock_updown=resblock_updown,
+                         use_scale_shift_norm=use_scale_shift_norm)   
         self.channels=unet_inout_channels
         self.unet_context_vector=unet_context_vector
         self.sequential = nn.Sequential(    nn.Conv2d(value, 512, kernel_size=1, stride=1, padding=0, bias=False),

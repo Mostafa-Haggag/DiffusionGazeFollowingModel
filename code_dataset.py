@@ -71,10 +71,11 @@ def main(config,config_1):
         os.makedirs(config_1.Dataset.output_dir, exist_ok=True)
     print("Loading dataset")
     source_loader, target_test_loader = get_dataset(config_1) # you get the two data sets 
-    source_iter = iter(source_loader)
+    source_iter = iter(target_test_loader)
     data_source = next(source_iter)
     (
                 s_rgb,
+                s_depth,
                 s_heads,# the face
                 s_masks,
                 s_gaze_heatmaps,
@@ -83,13 +84,45 @@ def main(config,config_1):
                 s_gaze_inside,# boolean yes or no
                 _,
                 _,coordinates_train
-    ) = data_source
+    ) = data_source 
     invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
                                                      std = [ 1/0.229, 1/0.224, 1/0.225 ]),
                                 transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
                                                      std = [ 1., 1., 1. ]),
                                ])
-    # ax_bbox.imshow((invTrans(image[idx]).permute(1, 2, 0).cpu().numpy()),vmin=0, vmax=1)    
+    id= 14
+    mask = 1-s_masks[id]
+    fig = plt.figure(figsize=(mask.shape[2] / 96, mask.shape[1] / 96), dpi=96)
+    ax = fig.add_subplot(111)
+
+    ax.axis("off")
+    print(mask.shape)
+    ax.imshow((mask.permute(1, 2, 0).cpu().numpy()), cmap='gray')
+    plt.savefig('mask.png', dpi=96, bbox_inches='tight')
+    ####################################################
+    head_image = s_heads[id]
+    fig = plt.figure(figsize=(head_image.shape[2] / 96, head_image.shape[1] / 96), dpi=96)
+    ax = fig.add_subplot(111)
+
+    ax.axis("off")
+    ax.imshow((invTrans(head_image).permute(1, 2, 0).cpu().numpy()))
+    plt.savefig('head.png', dpi=96, bbox_inches='tight')
+    ###############################################
+    image=s_rgb[id]
+    fig = plt.figure(figsize=(image.shape[2] / 96, image.shape[1] / 96), dpi=96)
+    ax = fig.add_subplot(111)
+
+    ax.axis("off")
+    ax.imshow((invTrans(image).permute(1, 2, 0).cpu().numpy()))
+    plt.savefig('image.png', dpi=96, bbox_inches='tight')
+    ########################################################
+    depth=s_depth[id]
+    fig = plt.figure(figsize=(depth.shape[2] / 96, depth.shape[1] / 96), dpi=96)
+    ax = fig.add_subplot(111)
+    ax.imshow((depth.permute(1, 2, 0).cpu().numpy()), cmap='magma')    
+    ax.axis("off")
+    plt.savefig('depth.png', dpi=96, bbox_inches='tight')
+    plt.show()
 
 
 

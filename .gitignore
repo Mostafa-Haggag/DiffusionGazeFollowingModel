@@ -349,3 +349,4 @@ gaze_cluster.yaml
 *.sh
 *.out
 *.csv
+codes_diagram/

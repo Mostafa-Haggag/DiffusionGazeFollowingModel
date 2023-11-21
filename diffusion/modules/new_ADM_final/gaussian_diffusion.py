@@ -580,8 +580,8 @@ class GaussianDiffusion:
         # print("x-start max after",th.max(x_start.view(16,-1),1)[0])
         x_t = self.q_sample(x_point, t, noise=noise)
         x_t  = x_t / x_t.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x_t
-        x_t = wrap_clamp_tensor(x_t,-1 * self.normalization_value,self.normalization_value)
-        # x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
+        # x_t = wrap_clamp_tensor(x_t,-1 * self.normalization_value,self.normalization_value)
+        x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
         x_t = self.unnormalize(x_t,self.normalization_value)
         # x start is the image before doing anyhting at all 
         ## generate heatmaps
@@ -930,8 +930,8 @@ class GaussianDiffusion:
         """
         if t[0] ==999:
             x = th.randn((t.shape[0],2), device=t.device)
-            # noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
-            noise = wrap_clamp_tensor(x,-1 * self.normalization_value,self.normalization_value)
+            noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
+            # noise = wrap_clamp_tensor(x,-1 * self.normalization_value,self.normalization_value)
             noise = self.unnormalize(noise,self.normalization_value)
             my_list = []
             for gaze_x, gaze_y in noise:
@@ -947,8 +947,8 @@ class GaussianDiffusion:
             # x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
             x_point  = x / x.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x
 
-            # x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
-            x_point = wrap_clamp_tensor(x_point,-1 * self.normalization_value,self.normalization_value)
+            x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
+            # x_point = wrap_clamp_tensor(x_point,-1 * self.normalization_value,self.normalization_value)
 
             x_point = self.unnormalize(x_point,self.normalization_value)
             my_list = []
@@ -980,8 +980,8 @@ class GaussianDiffusion:
         # new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = self.normalize(new_out,self.normalization_value)
-        # new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
-        new_out = wrap_clamp_tensor(new_out,-1 * self.normalization_value,self.normalization_value)
+        new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
+        # new_out = wrap_clamp_tensor(new_out,-1 * self.normalization_value,self.normalization_value)
 
         # new_x = self.normalize(new_x,self.normalization_value)
         # new_x = th.clamp(new_x, min=-1 * self.normalization_value, max=self.normalization_value)   

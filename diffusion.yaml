@@ -59,7 +59,7 @@ Diffusion:
   adm_learn_sigma: false
   conv_resample: true
   resblock_updown: false
-  use_scale_shift_norm: false
+  use_scale_shift_norm: true
 experiment_parameter:
   factor_multiplier: 1
   diff_normalization: 3

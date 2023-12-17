@@ -27,7 +27,9 @@ def get_model(config,device=torch.device("cuda")):
             dropout=config.Diffusion.unet_dropout,
             depth_flag=config.Gaze.depth_flag,
             resblock_updown=config.Diffusion.resblock_updown,
-            conv_resample=config.Diffusion.conv_resample
+            conv_resample=config.Diffusion.conv_resample,
+            use_scale_shift_norm=config.Diffusion.use_scale_shift_norm
+
             )
     modules = []
     # all the frezing stuff is set to false 

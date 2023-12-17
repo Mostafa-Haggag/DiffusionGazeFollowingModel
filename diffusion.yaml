@@ -59,6 +59,7 @@ Diffusion:
   adm_attention_module: false
   conv_resample: true
   resblock_updown: false
+  use_scale_shift_norm: true
 experiment_parameter:
   diff_normalization: 0.1
   norm_std_flag: true

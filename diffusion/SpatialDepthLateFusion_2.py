@@ -19,7 +19,8 @@ class SpatialDepthLateFusion_2(nn.Module):
         dropout=0.0,
         depth_flag=False,
         resblock_updown=False,
-        conv_resample=True
+        conv_resample=True,
+        use_scale_shift_norm=False,
     ):
         super(SpatialDepthLateFusion_2, self).__init__()
         self.gaze_model = gaze_model
@@ -36,7 +37,8 @@ class SpatialDepthLateFusion_2(nn.Module):
                          dropout=dropout,
                         resblock_updown=resblock_updown,
                         conv_resample=conv_resample,
-                         
+                        use_scale_shift_norm=use_scale_shift_norm
+
                          )   
         self.channels=unet_inout_channels
         self.unet_context_vector=unet_context_vector

@@ -830,7 +830,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             # gaze coordinates is 32 by 20 by 2 
             ## image size is 32 by 2 
             ## output size 64
-            sorted_tuples = sorted(enumerate(metrics), key=lambda x: x[1][0])# I sort the metrics
+            sorted_tuples = sorted(enumerate(metrics), key=lambda x: x[1][0],reverse=True)# I sort the metrics
             previous_sorted_list.extend([x[1] for x in sorted_tuples[:gaze_to_save]]) # extract the values auc of the worst 4
             original_indices=[x[0] for x in sorted_tuples[:gaze_to_save]]# index auc of worst 4
             #########################################################################
@@ -849,7 +849,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                 new_gaze_heatmap_pred = gaze_heatmap_pred[original_indices].clone()
                 new_coordinate_test = coordinates_test[original_indices].clone()
             else:
-                sorted_tuples_2 = sorted(enumerate(previous_sorted_list), key=lambda x: x[1][0])
+                sorted_tuples_2 = sorted(enumerate(previous_sorted_list), key=lambda x: x[1][0],reverse=True)
                 new_sorted_list = [x[1] for x in sorted_tuples_2[:gaze_to_save]]
                 final_indices = [x[0] for x in sorted_tuples_2[:gaze_to_save]] # index of the current batch so we can choose witch to remove
                 previous_sorted_list = new_sorted_list

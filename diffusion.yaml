@@ -8,7 +8,7 @@ Dataset:
   init_weights : "pretrained/init_weights.pt"
   # init_weights : "output/spatial_depth_late_fusion_gazefollow/diffusion_siga_8_norm_3_new_clamping/ckpt_last.pth"
   # eval_weights : "/media/mostafahaggag/Shared_Drive/thesis_work/Final_work/DiffusionGazeFollowingModel/output/spatial_depth_late_fusion_gazefollow/point_loss_norm_4_weighted_losses/ckpt_epoch_30.pth"
-  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/point_loss_8_fine_tuneing/ckpt_epoch_60.pth"
+  # eval_weights : "output/spatial_depth_late_fusion_gazefollow/point_image_trial/ckpt_epoch_5.pth"
   eval_weights : 
   lr: 2.5e-4
   epochs: 60

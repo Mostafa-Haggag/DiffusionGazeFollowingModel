@@ -96,6 +96,8 @@ class gaze_net_module(nn.Module):
             self.attn = nn.Linear(1808, 1 * 7 * 7)
             self.attention_module = attention_module
             self.unet_context_vector=unet_context_vector
+            self.postional_embedding_1 = PositionalEncodingPermute2D(self.unet_context_vector)
+            self.postional_embedding_2 = PositionalEncodingPermute2D(self.unet_context_vector)
         def forward(self, images, face,masks,depth=None):
             if self.depth_flag:
                     images = torch.cat((images, masks), dim=1)

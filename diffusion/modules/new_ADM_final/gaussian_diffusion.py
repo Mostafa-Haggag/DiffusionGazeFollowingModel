@@ -725,7 +725,7 @@ class GaussianDiffusion:
                  - 'sample': a random sample from the model.
                  - 'pred_xstart': a prediction of x_0.
         """
-        if t[0]!=999:
+        if t[0]!=self.num_timesteps - 1:
             Flag_unetsampling = True
         else:
             Flag_unetsampling = False
@@ -848,7 +848,7 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-                if t[0] == 999:
+                if t[0] == self.num_timesteps - 1:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning']
@@ -872,7 +872,7 @@ class GaussianDiffusion:
         Same usage as p_sample().
         """
         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
-        if t[0]!=999:
+        if t[0]!=self.num_timesteps - 1:
             Flag_unetsampling = True
         else:
             Flag_unetsampling = False
@@ -1006,7 +1006,7 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-                if t[0] == 999:
+                if t[0] == self.num_timesteps - 1:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning']

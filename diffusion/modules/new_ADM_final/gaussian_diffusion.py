@@ -779,7 +779,7 @@ class GaussianDiffusion:
                  - 'sample': a random sample from the model.
                  - 'pred_xstart': a prediction of x_0.
         """
-        if t[0]!=999:
+        if t[0]!=self.num_timesteps - 1:
             Flag_unetsampling = True
         else:
             Flag_unetsampling = False
@@ -902,7 +902,7 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-                if t[0] == 999:
+                if t[0] == self.num_timesteps - 1:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning'],
@@ -928,7 +928,7 @@ class GaussianDiffusion:
 
         Same usage as p_sample().
         """
-        if t[0] ==999:
+        if t[0] ==self.num_timesteps - 1:
             x = th.randn((t.shape[0],2), device=t.device)
             noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
             # noise = wrap_clamp_tensor(x,-1 * self.normalization_value,self.normalization_value)
@@ -961,7 +961,7 @@ class GaussianDiffusion:
                 my_list.append(gaze_heatmap)            
             x_hm=th.stack(my_list,0)
             x_hm=x_hm.unsqueeze(1).to(t.device,non_blocking=True)
-        if t[0]!=999:
+        if t[0]!=self.num_timesteps - 1:
             Flag_unetsampling = True
         else:
             Flag_unetsampling = False
@@ -1211,7 +1211,7 @@ class GaussianDiffusion:
                 )
                 yield out
                 img = out["sample"]
-                if t[0] == 999:
+                if t[0] == self.num_timesteps - 1:
                     del model_kwargs
                     model_kwargs= {'scene_face_feat':out['scene_face_feat'],
                                    'conditioning':out['conditioning'],

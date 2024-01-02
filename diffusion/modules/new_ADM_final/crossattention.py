@@ -39,9 +39,6 @@ class CrossAttention(nn.Module):
             nn.Linear(inner_dim, query_dim),
             nn.Dropout(dropout)
         )
-        # The to_out sequential module is used to project 
-        # the concatenated attention head vectors to the 
-        # output dimension query_dim. It consists of a linear layer followed by a dropout layer.
 
 
     def forward(self, x, context=None):
@@ -54,15 +51,11 @@ class CrossAttention(nn.Module):
         h = self.heads
 
         q = self.to_q(x)
-        # First, the query tensor x is linearly transformed to a tensor q using the weight matrix self.to_q
         context = default(context, x)# 96,16,1280 this allow to make this module work
-        # for cross attention and self attention
         # 96,2,1024
         k = self.to_k(context) 
         v = self.to_v(context) 
 
-        # Similarly, the context tensor is linearly transformed to tensors k and v using the weight matrices self.to_k and self.to_v, respectively. 
-        # go from (96,256,8*16) to (96*8,256,16)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
    
         sim = einsum('b i d, b j d -> b i j', q, k) * self.scale

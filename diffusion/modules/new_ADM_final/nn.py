@@ -115,14 +115,11 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     freqs = th.exp(
         -math.log(max_period) * th.arange(start=0, end=half, dtype=th.float32) / half
     ).to(device=timesteps.device)
-    # timesteps[:, None].float() torch.Size([16, 1])
-    # freqs[None] [1,4]
-    # 
     args = timesteps[:, None].float() * freqs[None] # size [16,4]
     embedding = th.cat([th.cos(args), th.sin(args)], dim=-1)# size [16,8]
     if dim % 2:# you donot enter in here because it is equal to 2 
         embedding = th.cat([embedding, th.zeros_like(embedding[:, :1])], dim=-1)
-    return embedding# add an extra channel contains zeros in the enddd !!!! 
+    return embedding
 
 
 def checkpoint(func, inputs, params, flag):

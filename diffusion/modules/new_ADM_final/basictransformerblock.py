@@ -1,9 +1,7 @@
 from torch import nn
 from .feedforward import FeedForward
 from .crossattention import CrossAttention
-# n_heads
-# n_heads
-# context_dim
+
 class BasicTransformerBlock(nn.Module):
     def __init__(self, dim, n_heads, d_head, dropout=0., context_dim=None, gated_ff=True, checkpoint=True):
         super().__init__()

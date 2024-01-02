@@ -21,8 +21,7 @@ class SpatialTransformer(nn.Module):
         # group norm
         self.norm = Normalize(in_channels) 
         
-        #  The purpose of this block is to transform the input image in a way that makes it more amenable to processing by the transformer architecture.
-        # The normalized input is then passed through a 1x1 convolution (self.proj_in) that projects it into a higher-dimensional space. 
+
         self.proj_in = nn.Conv2d(in_channels,
                                  inner_dim,
                                  kernel_size=1,
@@ -54,9 +53,7 @@ class SpatialTransformer(nn.Module):
         x = rearrange(x, 'b c h w -> b (h w) c') 
         for block in self.transformer_blocks:
             x = block(x, context=context)
-        # output still 96,256,128
-        # the number of channels will change according to where you are applying the spatial
-        # transformers
+
         x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
         x = self.proj_out(x)
         return x + x_in

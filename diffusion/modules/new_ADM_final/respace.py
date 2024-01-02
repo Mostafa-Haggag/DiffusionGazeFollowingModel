@@ -26,13 +26,9 @@ def space_timesteps(num_timesteps, section_counts):
                            DDIM paper.
     :return: a set of diffusion steps from the original process to use.
     """
-    # num_timesteps 1000 
-    # section_counts 1000
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
             desired_count = int(section_counts[len("ddim") :])# this is the desired number of counts in here
-            # it is 500  
-            # 1 to 250
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
@@ -91,15 +87,12 @@ class SpacedDiffusion(GaussianDiffusion):
 
     def p_mean_variance(
         self, model, *args, **kwargs
-    ):  # pylint: disable=signature-differs
-        # we come here next
-        # {'clip_denoised': False, 'model_kwargs': None}
+    ): 
         return super().p_mean_variance(self._wrap_model(model), *args, **kwargs)
 
     def training_losses(
         self, model, *args, **kwargs
-    ):  # pylint: disable=signature-differs
-        # we start from here 
+    ):  
         return super().training_losses(self._wrap_model(model), *args, **kwargs)
 
     def condition_mean(self, cond_fn, *args, **kwargs):
@@ -119,12 +112,7 @@ class SpacedDiffusion(GaussianDiffusion):
         # Scaling is done by the wrapped model.
         return t
 
-'''
-In Python, the __call__ method is a special method that allows 
-an object to be called as if it were a function. 
-When a class defines the __call__ method, instances of that class can be invoked using parentheses, 
-just like a regular function call.
-'''
+
 class _WrappedModel:
     def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps):
         self.model = model

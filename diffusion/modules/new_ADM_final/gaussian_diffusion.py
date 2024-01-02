@@ -223,11 +223,9 @@ class GaussianDiffusion:
             betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
         )
         # log calculation clipped because the posterior variance is 0 at the
-        # beginning of the diffusion chain.
         self.posterior_log_variance_clipped = np.log(
             np.append(self.posterior_variance[1], self.posterior_variance[1:])
         )
-        # very interestinggg
         self.posterior_mean_coef1 = (
             betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
         )
@@ -357,22 +355,15 @@ class GaussianDiffusion:
                  - 'log_variance': the log of 'variance'.
                  - 'pred_xstart': the prediction for x_0.
         """
-        # model is just dumpy what we computed previously we pass the noised images and the time steps 
         
         if model_kwargs is None:
             model_kwargs = {}
 
         B, C = x.shape[:2]# batch by number of channels 
         assert t.shape == (B,)
-        # print(type(model))
-        # we come here again
-        # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
-        # scale timestep is not super usefull at alll
         model_kwargs['Flag_unetsampling']=Flag_unetsampling
         model_output,inout,scene_face_feat,conditioning = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
-        # we donot enter the forward function but we should return in here
-        # this is where we have the error. 
-        # 2,6,64,64 for the mean and teh varianceee
+
 
         if self.model_var_type in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE]:
             # we arelearning the variance 
@@ -519,17 +510,12 @@ class GaussianDiffusion:
         """
         # we computer the posterior mean and variance
         # forward process processs
-        #  q(x{t_1}|x_t,x_0) 
         true_mean, _, true_log_variance_clipped = self.q_posterior_mean_variance(
             x_start=x_start, x_t=x_t, t=t
         )
-        # you get callled in here  learning mean and variance this is the learnend reverser processss
-        # p_\theta(x_{t-1}|x_{t})
         out = self.p_mean_variance(
             model, x_t, t, clip_denoised=clip_denoised, model_kwargs=model_kwargs
         )
-        # kl duvergnecnes between our learning psotieor mean and variance 
-        # and our learniend reversed process 
         kl = normal_kl(
             true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
         )# variantional lower bound terms nothing tooo fancy in here 
@@ -571,19 +557,12 @@ class GaussianDiffusion:
             else:
                 noise = th.randn_like(x_point)
         del model_kwargs['noise_strength']
-        # the forward process after adding the noise .
-        # we didnot normalize in here . 
-        # print("x-start min before",th.min(x_start.view(16,-1),1)[0])
-        # print("x-start max before ",th.max(x_start.view(16,-1),1)[0])
+
         x_point = self.normalize(x_point,self.normalization_value)
-        # print("x-start min after",th.min(x_start.view(16,-1),1)[0])
-        # print("x-start max after",th.max(x_start.view(16,-1),1)[0])
         x_t = self.q_sample(x_point, t, noise=noise)
         x_t  = x_t / x_t.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x_t
-        # x_t = wrap_clamp_tensor(x_t,-1 * self.normalization_value,self.normalization_value)
         x_t = th.clamp(x_t, min=-1 * self.normalization_value, max=self.normalization_value)
         x_t = self.unnormalize(x_t,self.normalization_value)
-        # x start is the image before doing anyhting at all 
         ## generate heatmaps
         sigma = model_kwargs['sigma']
         del model_kwargs['sigma']
@@ -653,9 +632,6 @@ class GaussianDiffusion:
             if self.loss_type == LossType.RESCALED_KL:
                 terms["loss"] *= self.num_timesteps
         elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
-            # print(model)
-            # print(type(model))
-            # we come here next step
             model_kwargs['Flag_unetsampling']=False
             model_output,inout,_,_ = model(x=x_t_final, ts=self._scale_timesteps(t), **model_kwargs)
 
@@ -687,13 +663,6 @@ class GaussianDiffusion:
                     t=t,
                     clip_denoised=False,
                 )["output"]
-                # we pass this dumpy model because this funciton will later be calling the model 
-                # funciton calling this model we do not do a forward prob but this is how we define the model
-                # no matter what you will pass here you will return r which is the frozen_out 
-                # dummpy return of what we always computeted 
-                # xtt the images that are noises
-                # xstart are the images in the beinginngg 
-                # we use t number of steps 
                 if self.loss_type == LossType.RESCALED_MSE:
                     # Divide by 1000 for equivalence with initial implementation.
                     # Without a factor of 1/1000, the VB term hurts the MSE term.
@@ -708,23 +677,16 @@ class GaussianDiffusion:
                 ModelMeanType.VELOCITY: self._predict_v(x_point, t, noise),
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
-            # make sure that network is within expected range
-            # model_output = th.clamp(model_output,-1*self.normalization_value,self.normalization_value)
             copy_model = model_output.clone().squeeze(1)
             pred_location = softargmax2d(copy_model,device=copy_model.device)
-            # terms["mse"] = mean_flat((target - model_output) ** 2)
-            # terms['kl_new_term']=calculate_kl_divergence(target,copy_model)
+
             terms["inout"] = inout
             terms["location"] = pred_location
             terms["mse"] = mse_loss_weight * mean_flat((target - model_output) ** 2)
             terms["mse_raw"] = mean_flat((target - model_output) ** 2)
 
-            # print("x-start min before",th.min(copy_model.view(16,-1),1)[0])
-            # print("x-start max before ",th.max(copy_model.view(16,-1),1)[0])
+
             terms["output"] = self.unnormalize(copy_model,self.normalization_value)
-            # print("x-start min after",th.min(terms["output"].view(16,-1),1)[0])
-            # print("x-start max after ",th.max(terms["output"].view(16,-1),1)[0])
-            # terms["output"] = copy_model
             if "vb" in terms:
                 terms["loss"] = terms["mse"] + terms["vb"]
             else:
@@ -909,7 +871,6 @@ class GaussianDiffusion:
                       }
         
     ###############################################################################################
-    ##TODO  Changes sampling directly in a different want
     def ddim_sample(
         self,
         model,
@@ -931,7 +892,6 @@ class GaussianDiffusion:
         if t[0] ==self.num_timesteps - 1:
             x = th.randn((t.shape[0],2), device=t.device)
             noise = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
-            # noise = wrap_clamp_tensor(x,-1 * self.normalization_value,self.normalization_value)
             noise = self.unnormalize(noise,self.normalization_value)
             my_list = []
             for gaze_x, gaze_y in noise:
@@ -944,11 +904,9 @@ class GaussianDiffusion:
             x_hm=th.stack(my_list,0)
             x_hm=x_hm.unsqueeze(1).to(t.device,non_blocking=True)
         else:
-            # x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
             x_point  = x / x.std(axis=(1), keepdims=True) if self.normalizaiton_std_flag else x
 
             x_point = th.clamp(x_point, min=-1 * self.normalization_value, max=self.normalization_value)
-            # x_point = wrap_clamp_tensor(x_point,-1 * self.normalization_value,self.normalization_value)
 
             x_point = self.unnormalize(x_point,self.normalization_value)
             my_list = []
@@ -977,23 +935,12 @@ class GaussianDiffusion:
         if cond_fn is not None:
             out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
         
-        # new_x=  (batch_argmax(x.squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = (batch_argmax(out["pred_xstart"].squeeze(),1)/64).to(x.device, non_blocking=True)
         new_out = self.normalize(new_out,self.normalization_value)
         new_out = th.clamp(new_out, min=-1 * self.normalization_value, max=self.normalization_value)
-        # new_out = wrap_clamp_tensor(new_out,-1 * self.normalization_value,self.normalization_value)
-
-        # new_x = self.normalize(new_x,self.normalization_value)
-        # new_x = th.clamp(new_x, min=-1 * self.normalization_value, max=self.normalization_value)   
+ 
         if t[0]<0:
             return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
-        # Usually our model outputs epsilon, but we re-derive it
-        # in case we used x_start or x_prev prediction.
-        # extract the maxium over a batch of samples # you dividie by 64 as the return is between
-        # 0 to 64
-        # print(x.shape)
-        # print(t.shape)
-        # print(new_out.shape)
 
         eps = self._predict_eps_from_xstart(x, t, new_out)
 
@@ -1011,114 +958,7 @@ class GaussianDiffusion:
             + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
         )
         sample = mean_pred + sigma * noise
-        # sigma = 8
-
-        # my_list = []
-        # for gaze_x, gaze_y in sample:
-        #     gaze_heatmap_i = th.zeros(64, 64)
-
-        #     gaze_heatmap = get_label_map_1(
-        #     gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
-        #     )
-        #     my_list.append(gaze_heatmap)
-        #     # print(gaze_heatmap.shape)
-        
-        # x_t_final=th.stack(my_list,0)
-        # x_t_final=x_t_final.unsqueeze(1)
-        # x_t_final=x_t_final.to(x.device, non_blocking=True)
         return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
-
-    ### DDIM SAMPLE ORGINAL
-    # def ddim_sample(
-    #     self,
-    #     model,
-    #     x,
-    #     t,
-    #     clip_denoised=True,
-    #     denoised_fn=None,
-    #     cond_fn=None,
-    #     model_kwargs=None,
-    #     eta=0.0,
-        
-    # ):
-    #     """
-    #     Sample x_{t-1} from the model using DDIM.
-
-    #     Same usage as p_sample().
-    #     """
-    #     if t[0] ==999:
-    #         # _,_,_,_,x= model(heat_map=x,time=self._scale_timesteps(t), **model_kwargs)
-    #         # print(x.shape)
-    #         # print(x.dtype)
-    #         noise = th.randn((t.shape[0],2), device=t.device)
-    #         noise = th.clamp(noise, min=-1 * self.normalization_value, max=self.normalization_value)
-    #         noise = self.unnormalize(noise,self.normalization_value)
-    #         sigma = 8
-    #         my_list = []
-    #         for gaze_x, gaze_y in noise:
-    #             gaze_heatmap_i = th.zeros(64, 64)
-
-    #             gaze_heatmap = get_label_map_1(
-    #             gaze_heatmap_i, [gaze_x * 64, gaze_y * 64], sigma, pdf="Gaussian"
-    #             )
-    #             my_list.append(gaze_heatmap)            
-    #         x=th.stack(my_list,0)
-    #         x=x.unsqueeze(1).to(t.device,non_blocking=True)
-    #     else:
-    #         x = x / x.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x
-    #         x = th.clamp(x, min=-1 * self.normalization_value, max=self.normalization_value)
-    #         x = self.unnormalize(x,self.normalization_value)
-    #     if t[0]!=999:
-    #         Flag_unetsampling = True
-    #     else:
-    #         Flag_unetsampling = False
-    #     out = self.p_mean_variance(
-    #         model,
-    #         x,
-    #         t,
-    #         clip_denoised=clip_denoised,
-    #         denoised_fn=denoised_fn,
-    #         model_kwargs=model_kwargs,
-    #         Flag_unetsampling=Flag_unetsampling
-    #     )
-    #     out["pred_xstart"] = self.normalize(out["pred_xstart"],self.normalization_value)
-    #     out["pred_xstart"] = th.clamp(out["pred_xstart"], min=-1 * self.normalization_value, max=self.normalization_value)
-    #     if cond_fn is not None:
-    #         out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
-    #     if t[0]<0:
-    #         return {"sample": out["pred_xstart"], "pred_xstart": out["pred_xstart"],"inout":out["inout"]}
-    #     # Usually our model outputs epsilon, but we re-derive it
-    #     # in case we used x_start or x_prev prediction.
-    #     if self.model_mean_type in [ModelMeanType.VELOCITY]:
-    #         eps= self._predict_eps_for_v(out['model_output'], t, x)
-    #     else:
-    #         eps = self._predict_eps_from_xstart(x, t, out["pred_xstart"])
-
-    #     alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
-    #     alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x.shape)
-    #     sigma = (
-    #         eta
-    #         * th.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
-    #         * th.sqrt(1 - alpha_bar / alpha_bar_prev)
-    #     )
-    #     # Equation 12.
-    #     noise = th.randn_like(x)
-    #     mean_pred = (
-    #         out["pred_xstart"] * th.sqrt(alpha_bar_prev)
-    #         + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
-    #     )
-    #     # nonzero_mask = (
-    #     #     (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
-    #     # )  
-    #     # no noise when t == 0
-    #     # if nonzero_mask.all() ==False:
-    #     #     sample = out["pred_xstart"]
-    #     # else:
-    #     # sample = mean_pred + nonzero_mask * sigma * noise
-    #     sample = mean_pred + sigma * noise
-
-    #     return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
-   
 
     def ddim_sample_loop(
         self,
@@ -1183,10 +1023,6 @@ class GaussianDiffusion:
             img = noise
         else:
             img = th.randn((shape[0],2), device=device)
-        # I am sampling in here not till 1000 but till specific number of sample steps 
-        # img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
-        # indices = list(range(self.sample_steps))[::-1]
-        #modifcation to be done to make ddim work and start from last sample 
         indices =   list(reversed(th.linspace(-1, self.num_timesteps - 1, steps = self.sample_steps+1).int().tolist()))
         # print(indices)
         if progress:

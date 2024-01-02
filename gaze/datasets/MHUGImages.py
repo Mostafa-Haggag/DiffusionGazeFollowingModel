@@ -53,8 +53,6 @@ class MHUGImages(Dataset):
                     index_col=False,
                     names=["path","person_index" ,"xmin", "ymin", "xmax", "ymax", "gazex", "gazey"],
                 )
-                # sampling 20% from the full data set
-                # df = df.sample(frac=0.2)
 
                 show_name = sequence_path.split("/")[-3]
                 clip = sequence_path.split("/")[-2]
@@ -63,8 +61,6 @@ class MHUGImages(Dataset):
                 # all_dfs.append(df)  # Append each DataFrame to the list
                 self.X.extend(df.values.tolist())
         self.length = len(self.X)
-        # final_df = pd.concat(all_dfs, axis=0, ignore_index=True)
-        # final_df.to_csv('meow.csv')
         print(f"Total images: {self.length}")
 
     def __getitem__(self, index):

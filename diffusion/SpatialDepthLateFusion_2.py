@@ -60,28 +60,21 @@ class SpatialDepthLateFusion_2(nn.Module):
         self.depth_flag=depth_flag
 
     def forward(self,heat_map,time, images, face,masks,depth = None):
-        # This part is related to x_loss
-        # Scene_face_feat should contain output of resnet of face and head
-        # Both the condiitoning and scene face feat should be changed according 
-        # To what gaze model you are using
+
         if self.depth_flag:
             scene_face_feat,conditioning=self.gaze_model(images, face,masks,depth)
         else:
             scene_face_feat,conditioning=self.gaze_model(images, face,masks)
 
-        # this part is to be used during the X-loss only 
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
-        # encoding_inout = th.sigmoid(encoding_inout)
         x = self.model(heat_map,time,conditioning)
         return x,encoding_inout,scene_face_feat,conditioning
     def forward_shorter (self,heat_map,time,scene_face_feat,conditioning):
 
-        # this part is to be used during the X-loss only 
         encoding_inout = self.sequential(scene_face_feat)
         encoding_inout = encoding_inout.view(-1, 49)
         encoding_inout = self.fc_inout(encoding_inout)
-        # encoding_inout = th.sigmoid(encoding_inout)
         x = self.model(heat_map,time,conditioning)
         return x,encoding_inout,scene_face_feat,conditioning

@@ -269,7 +269,6 @@ class GaussianDiffusion:
         # caluclating the varianceeeeee *noise +mean *x0 = posterioier 
         Equation 9 
         X_t=sqrt(alpha_cumprod)*(x_0)+sqrt(1-alpha_cumprod)*noise
-        UNDERSTOOD
         """
         if noise is None:
             noise = th.randn_like(x_start)
@@ -286,7 +285,6 @@ class GaussianDiffusion:
 
             q(x_{t-1} | x_t, x_0)
             equation 12 found .
-        UNDERSTOOD
         """
         assert x_start.shape == x_t.shape
         # this is equation 11
@@ -337,15 +335,10 @@ class GaussianDiffusion:
 
         B, C = x.shape[:2]# batch by number of channels 
         assert t.shape == (B,)
-        # print(type(model))
-        # we come here again
-        # x and ts are things in the wrapped model, the only problem in here is that model kwargs is null 
-        # scale timestep is not super usefull at alll
+
         model_kwargs['Flag_unetsampling']=Flag_unetsampling
         model_output,inout,scene_face_feat,conditioning = model(x=x,ts=self._scale_timesteps(t), **model_kwargs)
-        # we donot enter the forward function but we should return in here
-        # this is where we have the error. 
-        # 2,6,64,64 for the mean and teh varianceee
+
 
         if self.model_var_type in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE]:
             # we arelearning the variance 
@@ -484,19 +477,14 @@ class GaussianDiffusion:
                  - 'output': a shape [N] tensor of NLLs or KLs.
                  - 'pred_xstart': the x_0 predictions.
         """
-        # we computer the posterior mean and variance
-        # forward process processs
-        #  q(x{t_1}|x_t,x_0) 
         true_mean, _, true_log_variance_clipped = self.q_posterior_mean_variance(
             x_start=x_start, x_t=x_t, t=t
         )
-        # you get callled in here  learning mean and variance this is the learnend reverser processss
-        # p_\theta(x_{t-1}|x_{t})
+
         out = self.p_mean_variance(
             model, x_t, t, clip_denoised=clip_denoised, model_kwargs=model_kwargs
         )
-        # kl duvergnecnes between our learning psotieor mean and variance 
-        # and our learniend reversed process 
+
         kl = normal_kl(
             true_mean, true_log_variance_clipped, out["mean"], out["log_variance"]
         )# variantional lower bound terms nothing tooo fancy in here 
@@ -538,16 +526,11 @@ class GaussianDiffusion:
             else:
                 noise = th.randn_like(x_start)
         del model_kwargs['noise_strength']
-        # the forward process after adding the noise .
-        # we didnot normalize in here . 
-        # print("x-start min before",th.min(x_start.view(16,-1),1)[0])
-        # print("x-start max before ",th.max(x_start.view(16,-1),1)[0])
+
         x_start = self.normalize(x_start,self.normalization_value)
-        # print("x-start min after",th.min(x_start.view(16,-1),1)[0])
-        # print("x-start max after",th.max(x_start.view(16,-1),1)[0])
+
         x_t = self.q_sample(x_start, t, noise=noise)
         x_t  = x_t / x_t.std(axis=(1,2,3), keepdims=True) if self.normalizaiton_std_flag else x_t
-        # x start is the image before doing anyhting at all 
         # take care of normalization.
         mse_loss_weight = None
         alpha = _extract_into_tensor(self.sqrt_alphas_cumprod, t, t.shape)
@@ -655,22 +638,15 @@ class GaussianDiffusion:
                 ModelMeanType.VELOCITY: self._predict_v(x_start, t, noise),
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
-            # make sure that network is within expected range
-            # model_output = th.clamp(model_output,-1*self.normalization_value,self.normalization_value)
+
             copy_model = model_output.clone().squeeze(1)
             pred_location = softargmax2d(copy_model,device=copy_model.device)
-            # terms["mse"] = mean_flat((target - model_output) ** 2)
-            # terms['kl_new_term']=calculate_kl_divergence(target,copy_model)
             terms["inout"] = inout
             terms["location"] = pred_location
             terms["mse"] = mse_loss_weight * mean_flat((target - model_output) ** 2)
             terms["mse_raw"] = mean_flat((target - model_output) ** 2)
-            # print("x-start min before",th.min(copy_model.view(16,-1),1)[0])
-            # print("x-start max before ",th.max(copy_model.view(16,-1),1)[0])
+
             terms["output"] = self.unnormalize(copy_model,self.normalization_value)
-            # print("x-start min after",th.min(terms["output"].view(16,-1),1)[0])
-            # print("x-start max after ",th.max(terms["output"].view(16,-1),1)[0])
-            # terms["output"] = copy_model
             if "vb" in terms:
                 terms["loss"] = terms["mse"] + terms["vb"]
             else:
@@ -906,14 +882,6 @@ class GaussianDiffusion:
             out["pred_xstart"] * th.sqrt(alpha_bar_prev)
             + th.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
         )
-        # nonzero_mask = (
-        #     (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
-        # )  
-        # no noise when t == 0
-        # if nonzero_mask.all() ==False:
-        #     sample = out["pred_xstart"]
-        # else:
-        # sample = mean_pred + nonzero_mask * sigma * noise
         sample = mean_pred + sigma * noise
 
         return {"sample": sample, "pred_xstart": out["pred_xstart"],"inout":out["inout"],"scene_face_feat":out["scene_face_feat"],"conditioning":out["conditioning"]}
@@ -979,10 +947,6 @@ class GaussianDiffusion:
             img = noise
         else:
             img = th.randn(*shape, device=device)
-        # I am sampling in here not till 1000 but till specific number of sample steps 
-        # img = img.clamp(-1*self.normalization_value,1*self.normalization_value)
-        # indices = list(range(self.sample_steps))[::-1]
-        #modifcation to be done to make ddim work and start from last sample 
         indices =   list(reversed(th.linspace(-1, self.num_timesteps - 1, steps = self.sample_steps+1).int().tolist()))
         # print(indices)
         if progress:

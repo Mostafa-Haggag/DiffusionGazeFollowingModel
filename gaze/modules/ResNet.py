@@ -45,9 +45,6 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, block=Bottleneck, in_channels=3, layers=[3, 4, 6, 3, 2], inplanes=64):
         super(ResNet, self).__init__()
-        # layers it is set to [3, 4, 6, 3, 2]
-        # inplances = 64
-        # bottle neck is a class that we call 
         self.inplanes = inplanes # it can be 3 or 4 it depends
 
         self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -71,11 +68,6 @@ class ResNet(nn.Module):
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
-        # blocks [3, 4, 6, 3, 2]
-        # self.inplaces =3/4
-        # block.expansion is equal to 4
-        # planes can be 64,128,256,512,256
-        # we will always enter in this conditions 
         if stride != 1 or self.inplanes != planes * block.expansion:
             #4,6,3 will enter here
             downsample = nn.Sequential(
@@ -85,15 +77,6 @@ class ResNet(nn.Module):
 
         layers = [block(self.inplanes, planes, stride, downsample)]
         self.inplanes = planes * block.expansion# this is changing
-        '''
-        INTIALLYY inplanes = 3/4
-                     PLANES INPLANES    BLOCKS     STRIDE      PLANES
-        inplanes = 4 * 64   = 256  -------> 3--------> 1---------> 64  
-        inplanes = 4 * 128  = 512  -------> 4--------> 2---------> 128
-        inplanes = 4 * 256  = 1024 -------> 6--------> 2---------> 256 
-        inplanes = 4 * 512  = 2048 -------> 3--------> 2---------> 512
-        inplanes = 4 * 256  = 1024 -------> 2--------> 1---------> 256
-        '''
         for _ in range(1, blocks):# we repeate a number of tims this module
             layers.append(block(self.inplanes, planes))
             # I am repeating the same block more than onceee

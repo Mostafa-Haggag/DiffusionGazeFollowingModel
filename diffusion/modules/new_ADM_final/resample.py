@@ -21,58 +21,7 @@ def create_named_schedule_sampler(name, diffusion):
 
 
 class ScheduleSampler(ABC):
-    """
-    A distribution over timesteps in the diffusion process, intended to reduce
-    variance of the objective.
 
-    By default, samplers perform unbiased importance sampling, in which the
-    objective's mean is unchanged.
-    However, subclasses may override sample() to change how the resampled
-    terms are reweighted, allowing for actual changes in the objective.
-    The ScheduleSampler class is an abstract base class
-    (ABC) that represents a distribution over timesteps in 
-    a diffusion process.
-    * It is designed to reduce the variance of an objective function. 
-    * The purpose of this class is to perform importance sampling,
-    where timesteps are sampled according to a distribution 
-    and weighted to adjust the objective.
-    
-    * The class provides two methods: 
-        * weights() and 
-        * sample(batch_size, device).
-        
-    * The weights() method is an abstract method that 
-        should be implemented by subclasses.
-        It returns a NumPy array of weights,
-        where each weight corresponds to a diffusion step.
-        These weights do not need to be normalized but must 
-        be positive.
-
-    * The sample(batch_size, device)
-    method performs importance sampling for a batch of timesteps.
-    It takes two arguments:
-    batch_size, which specifies the number of timesteps to sample, and
-    device, which indicates the Torch device to save the results to. 
-    The method internally computes the probabilities of each timestep
-        using the weights obtained from the weights() method.
-    Then, it uses np.random.choice to sample batch_size indices based
-    on these probabilities.
-     
-    * The sampled indices are converted to Torch tensors and sent to the
-    specified device.
-    The method also computes the weights that should be used to 
-    scale the resulting losses based on the sampled indices and 
-    weights.
-    These weights are also converted to Torch tensors and sent to the 
-    specified device.
-    Finally, the method returns a tuple containing the sampled indices
-    and weights.
-    
-    * It's worth noting that this class is meant to be subclassed, 
-    and the sample() method can be overridden in subclasses to modify
-    the reweighting of the resampled terms, allowing for 
-    changes in the objective beyond unbiased importance sampling.
-    """
 
     @abstractmethod
     def weights(self):
@@ -83,15 +32,6 @@ class ScheduleSampler(ABC):
         """
 
     def sample(self, batch_size, device):
-        """
-        Importance-sample timesteps for a batch.
-
-        :param batch_size: the number of timesteps.
-        :param device: the torch device to save to.
-        :return: a tuple (timesteps, weights):
-                 - timesteps: a tensor of timestep indices.
-                 - weights: a tensor of weights to scale the resulting losses.
-        """
         w = self.weights()
         p = w / np.sum(w) # 1/1000 for all the values 
         indices_np = np.random.choice(len(p), size=(batch_size,), p=p) # the index that will be choosing
@@ -112,17 +52,6 @@ class UniformSampler(ScheduleSampler):
 
 class LossAwareSampler(ScheduleSampler):
     def update_with_local_losses(self, local_ts, local_losses):
-        """
-        Update the reweighting using losses from a model.
-
-        Call this method from each rank with a batch of timesteps and the
-        corresponding losses for each of those timesteps.
-        This method will perform synchronization to make sure all of the ranks
-        maintain the exact same reweighting.
-
-        :param local_ts: an integer Tensor of timesteps.
-        :param local_losses: a 1D Tensor of losses.
-        """
         batch_sizes = [
             th.tensor([0], dtype=th.int32, device=local_ts.device)
             for _ in range(dist.get_world_size())

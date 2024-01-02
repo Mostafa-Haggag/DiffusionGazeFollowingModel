@@ -5,34 +5,10 @@ from .gaussian_diffusion import GaussianDiffusion
 
 
 def space_timesteps(num_timesteps, section_counts):
-    """
-    Create a list of timesteps to use from an original diffusion process,
-    given the number of timesteps we want to take from equally-sized portions
-    of the original process.
 
-    For example, if there's 300 timesteps and the section counts are [10,15,20]
-    then the first 100 timesteps are strided to be 10 timesteps, the second 100
-    are strided to be 15 timesteps, and the final 100 are strided to be 20.
-
-    If the stride is a string starting with "ddim", then the fixed striding
-    from the DDIM paper is used, and only one section is allowed.
-
-    :param num_timesteps: the number of diffusion steps in the original
-                          process to divide up.
-    :param section_counts: either a list of numbers, or a string containing
-                           comma-separated numbers, indicating the step count
-                           per section. As a special case, use "ddimN" where N
-                           is a number of steps to use the striding from the
-                           DDIM paper.
-    :return: a set of diffusion steps from the original process to use.
-    """
-    # num_timesteps 1000 
-    # section_counts 1000
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
             desired_count = int(section_counts[len("ddim") :])# this is the desired number of counts in here
-            # it is 500  
-            # 1 to 250
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
@@ -65,13 +41,6 @@ def space_timesteps(num_timesteps, section_counts):
 
 
 class SpacedDiffusion(GaussianDiffusion):
-    """
-    A diffusion process which can skip steps in a base diffusion process.
-
-    :param use_timesteps: a collection (sequence or set) of timesteps from the
-                          original diffusion process to retain.
-    :param kwargs: the kwargs to create the base diffusion process.
-    """
 
     def __init__(self, use_timesteps, **kwargs):
         self.use_timesteps = set(use_timesteps)
@@ -119,12 +88,7 @@ class SpacedDiffusion(GaussianDiffusion):
         # Scaling is done by the wrapped model.
         return t
 
-'''
-In Python, the __call__ method is a special method that allows 
-an object to be called as if it were a function. 
-When a class defines the __call__ method, instances of that class can be invoked using parentheses, 
-just like a regular function call.
-'''
+
 class _WrappedModel:
     def __init__(self, model, timestep_map, rescale_timesteps, original_num_steps):
         self.model = model

@@ -2,32 +2,27 @@ import multiprocessing
 import os
 import random
 from datetime import datetime
-# from einops import reduce
 import functools
 from operator import is_not
 from functools import partial
 import numpy as np
 import torch
 import torch.nn as nn
-# from dotenv import load_dotenv
 from joblib import Parallel, delayed
 from skimage.transform import resize
 from timm.utils import AverageMeter
 from torchvision.transforms import transforms
 import torch.nn.functional as F
-# from torchvision import transforms as utils
 from torchvision.utils import save_image
 # visualization
 import matplotlib
-# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt 
 from torchvision.transforms import transforms
 from skimage.transform import resize
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import matplotlib.patches as patches
 from PIL import Image
-# from einops import rearrange
-# import math 
+
 import wandb
 import io
 from omegaconf import OmegaConf
@@ -85,7 +80,6 @@ def main(config,config_1):
     print("Loading model")
     # YOU  got the model 
     model = get_model(config_1, device=device).to(device,memory_format=get_memory_format(config_1))
-    # this the spatiiala transform number 2 contianing everything that I need in here right now.  
 
     print("The diffusion ")
     diffusion = create_gaussian_diffusion(
@@ -113,7 +107,6 @@ def main(config,config_1):
     ema_rate = config_1.Dataset.ema_rate
     if config_1.Dataset.eval_weights:
         # evaluation work 
-        # Need to be editted
         print("Preparing evaluation")
         pretrained_dict_org = torch.load(config_1.Dataset.eval_weights, map_location=device)
         pretrained_dict = pretrained_dict_org.get("model_state_dict") or pretrained_dict_org.get("model")
@@ -121,9 +114,7 @@ def main(config,config_1):
         run_id = pretrained_dict_org.get("run_id")
         epoch  = pretrained_dict_org.get("epoch") 
 
-        # ema_params = copy.deepcopy(list(model.parameters()))
-        # this line of code doesnot make any sense we could remove it
-        # ema_params = [pretrained_dict_org.get("ema_params")[name] for name, _ in model.named_parameters()]
+
         for index, element in enumerate(list(pretrained_dict_org.get("ema_params").keys())):
             if element.startswith("model."):
                 # print(element)
@@ -142,11 +133,9 @@ def main(config,config_1):
                                   , lr=config_1.Dataset.lr
                                   , weight_decay=config_1.Dataset.weight_decay
                                   )
-        # incase there is an ema checkpoint for the loaded weights
         optimizer.zero_grad()
         if config_1.Dataset.amp:
                 model, optimizer = amp.initialize(model, optimizer, opt_level=config_1.Dataset.amp)
-        ## TODO: check the evaluate funciton in here !!!!!!!
         auc, min_dist, avg_dist, min_ang_err, avg_ang_err,avg_ao,avg_heatmpap_ao,wandb_gaze_heatmap_images = \
                                         evaluate(config_1, 
                                                 model,
@@ -247,9 +236,7 @@ def main(config,config_1):
                 print(f"Loading weights, optimizer and losses from {latest_checkpoint} run. This may take a while")
 
                 checkpoint = torch.load(latest_checkpoint)
-                # The torch.load() function in PyTorch is used to load saved objects from a file, including models and tensors.
-                # It is a general-purpose function that can be used to load various types of objects that were previously 
-                # saved using torch.save() or similar methods.
+
                 model = load_pretrained(model, checkpoint["model"])
                 # # Get optimizer
 
@@ -272,9 +259,6 @@ def main(config,config_1):
                 run_id = checkpoint["run_id"]
                 del checkpoint
 
-        # The next_epoch check makes sure that we start with init_weights even when resume is set to True but no
-        # checkpoints are not found and i am starting from 0 and I must set the intial weightss
-        # the one the 3amadak allak 3alehom 
         if config_1.Dataset.init_weights and next_epoch == 0:
             # you are putting some weights in the begining only
             print("Loading init weights")
@@ -283,10 +267,6 @@ def main(config,config_1):
             pretrained_dict = pretrained_dict.get("model_state_dict") or pretrained_dict.get("model")
 
             model = load_pretrained(model, pretrained_dict)
-            # optimizer = get_optimizer(model.parameters()
-            #                             , lr=config.lr
-            #                             , weight_decay=config.weight_decay
-            #                         )
             optimizer = get_optimizer(model
                                         , lr=config_1.Dataset.lr
                                         , weight_decay=config_1.Dataset.weight_decay
@@ -298,11 +278,6 @@ def main(config,config_1):
             optimizer.zero_grad()
             del pretrained_dict
         elif len(checkpoints) == 0:
-            # you are putting no weights at all
-            # optimizer = get_optimizer(model.parameters()
-            #                             , lr=config.lr
-            #                             , weight_decay=config.weight_decay
-            #                         )
             optimizer = get_optimizer(model
                                         , lr=config.lr
                                         , weight_decay=config.weight_decay
@@ -312,8 +287,7 @@ def main(config,config_1):
             optimizer.zero_grad()
             if config_1.experiment_parameter.lr_schedular:
                     scheduler = LinearWarmupCosineAnnealingLR(optimizer,warmup_epochs=int(config_1.Dataset.epochs*0.1), max_epochs=config_1.Dataset.epochs)
-        # turning it on fucks everything
-        # print(len(optimizer.param_groups))
+
 
         for param_group in optimizer.param_groups:
             print("Learning rate:", param_group['lr'])
@@ -353,9 +327,7 @@ def main(config,config_1):
         # we can ignore this part as it is not needed 
         if config_1.Dataset.amp:
             model, optimizer = amp.initialize(model, optimizer, opt_level=config_1.Dataset.amp)
-        # turning on the DDIM Sampler from here!!!!!
-        # the function  that we will be calling aaccording to the number of smaplign 
-        # time steps relative to the train time steps !!!!!
+
         mse_loss = nn.MSELoss() # not reducing in order to ignore outside cases
         bg_loss =  nn.BCEWithLogitsLoss()
 
@@ -510,7 +482,6 @@ def train_one_epoch(
         # the part of the samplar is ready in here. 
         # sampler is outside 
         t, weights = schedule_sampler.sample(s_rgb.shape[0], device)
-        # s_rgb = torch.cat((s_rgb, s_masks), dim=1)
         s_rgb = s_rgb.to(device, non_blocking=True, memory_format=get_memory_format(config))
         s_heads = s_heads.to(device, non_blocking=True, memory_format=get_memory_format(config))
         s_gaze_heatmaps = s_gaze_heatmaps.unsqueeze(1).to(device, non_blocking=True)
@@ -530,8 +501,7 @@ def train_one_epoch(
                 'masks':s_masks,
                 'noise_strength':config.experiment_parameter.offset_noise_strength,
                 }
-        # return from the model
-        # you didnot normalize here at all 
+
         compute_losses = functools.partial(
                         diffusion.training_losses,
                         model,
@@ -576,10 +546,7 @@ def train_one_epoch(
         # # Gradient clipping 
         nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
         optimizer.step()
-        # the idea here is that you are not evaluating the ema and this is the problem 
-        # do you understand the idea in here? you could choose to evaluate using what weights
-        # if you use ema weights you will be evaluating something else.
-        # for rate, params in zip(ema_rate, ema_params):
+
         update_ema(ema_params, list(model.parameters()), rate=ema_rate)
         optimizer.zero_grad()
 
@@ -771,16 +738,12 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                     _,coordinates_test
                 ) = data
             images_copy= images
-            # images = torch.cat((images, masks), dim=1)
             images = images.to(device, non_blocking=True, memory_format=get_memory_format(config))
             gazer_mask = gazer_mask.to(device, non_blocking=True, memory_format=get_memory_format(config))
             faces = faces.to(device, non_blocking=True, memory_format=get_memory_format(config))
             masks = masks.to(device, non_blocking=True, memory_format=get_memory_format(config))
             gaze_inout = gaze_inout.to(device, non_blocking=True).float()
-            # print(gaze_inout.shape,images.shape)
-            # print(gaze_inout[0].shape)
-            # print(gaze_coords[0].shape)
-            # print(coordinates_test.shape)
+
             if config.Gaze.depth_flag:    
                 micro_cond = {'images':images,
                       'face':faces,
@@ -798,13 +761,7 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
             model_kwargs=micro_cond,
             progress=True
             )
-            # print(gaze_heatmap_pred.shape)
-            # gaze_heatmap_pred = model.sample(images,masks,faces,gazer_mask,config.eval_from_picture,config.time_noise,images.shape[0])
-            # sample = torch.cat((gaze_heatmap_pred[:gaze_to_save],gazer_mask.unsqueeze(1)[:gaze_to_save]), -2)
-            # you sample for everything which is a problem.
 
-            # slicing to remove the uneeded stuff from here. 
-            # gaze_heatmap_pred = gaze_heatmap_pred*inout.unsqueeze(-1).unsqueeze(-1)
             gaze_heatmap_pred = gaze_heatmap_pred.squeeze(1).cpu()#32,64,64
             gaze_inside_all.extend(gaze_inout.cpu().tolist())
             gaze_inside_pred_all.extend(inout.cpu().tolist())
@@ -817,32 +774,13 @@ def evaluate(config, model, epoch,device, loader, sample_fn):
                 )
                 for b_i in range(len(gaze_coords))
             )
-            # print(gaze_inout.cpu().numpy())
-            # print(inout.cpu().numpy())
-            # ao = get_ap(gaze_inout.cpu().numpy(),inout.cpu().numpy())
-            # print(ao,ao.shape)
-            # print(ao.shape)
-            # ao_meter.update(ao)
 
-            # metrics = list(filter(partial(is_not, None),metrics ))
-            # len gaze coordinates = 32 which mean that i am looping on the batch size
-            # eye coordinates is 32 by 20 by2
-            # gaze coordinates is 32 by 20 by 2 
-            ## image size is 32 by 2 
-            ## output size 64
+
+
             sorted_tuples = sorted(enumerate(metrics), key=lambda x: x[1][0],reverse=True)# I sort the metrics
             previous_sorted_list.extend([x[1] for x in sorted_tuples[:gaze_to_save]]) # extract the values auc of the worst 4
             original_indices=[x[0] for x in sorted_tuples[:gaze_to_save]]# index auc of worst 4
-            #########################################################################
-            # adding the indices
 
-            # new_image.extend([x[0] for x in images[original_indices]]) 
-            # new_gazer_mask.extend([x[0] for x in gazer_mask[original_indices]])
-            # new_gaze_heatmap_pred.extend([x[0] for x in gaze_heatmap_pred[original_indices]])
-            # new_coordinate_test.extend([x[0] for x in coordinates_test[original_indices]])
-            #########################################################################
-            #[3,2,7,5]
-            # [8,9,10,4]
             if batch == 0:
                 new_image = images[original_indices].clone()
                 new_gazer_mask = gazer_mask[original_indices].clone()
@@ -916,18 +854,12 @@ def evaluate_one_item(
     img_size,
     output_size,
 ):
-    #gaze_heatmap_pred 64by 64
-    # eye_coords 20 by2 
-    # gaze coordinate 20 by 2 
-    # image__size 2
-    # Remove padding and recover valid ground truth points
+
     valid_gaze = gaze_coords[gaze_coords != -1].view(-1, 2)
     valid_eyes = eye_coords[eye_coords != -1].view(-1, 2)
 
-    # Skip items that do not have valid gaze coords
     if len(valid_gaze) == 0:
         return
-    # print(type(img_size))
     org_hot = get_multi_hot_map(valid_gaze, torch.full((2,), 64,dtype=torch.int32)) # ground truth 
     unscaled_heatmap = resize(gaze_heatmap_pred, (64, 64))
     auc_precision_recall = get_ap(np.reshape(org_hot, org_hot.size), np.reshape(unscaled_heatmap, unscaled_heatmap.size))
@@ -957,17 +889,6 @@ if __name__ == "__main__":
     torch.manual_seed(1)
     random.seed(1)
     np.random.seed(1)
-    # load_dotenv()# I donot get very well what is happening in here.It shouldnot be used to be honest but va bene hahahahahaha
-    '''
-    The load_dotenv() function is used in Python to load environment variables from a .env file into the operating system's environment variables.
-    Once you have installed the package, you can use the load_dotenv() function to load the environment variables from the .env file located in the
-    current working directory. The .env file should contain environment variable names and their values, separated by an equal sign (=).
-    For example, if you have a .env file with the following contents:
-    You can load these variables into your Python script by calling load_dotenv() at the beginning of your script:
-
-
-    I didnot find anything like that in the github 
-    '''
     x1,x2,x3=get_config()
     merged_config = OmegaConf.merge(x2, x3)
     main(x1,merged_config)

@@ -217,7 +217,7 @@ def main(config,config_1):
             checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith("pth")]
             if len(checkpoints) > 0:
                 latest_checkpoint = max(
-                    [os.path.join(config.output_dir, d) for d in checkpoints],
+                    [os.path.join(config_1.Dataset.output_dir, d) for d in checkpoints],
                     key=os.path.getmtime,
                 )
                 print(f"Latest checkpoint found: {latest_checkpoint}")
